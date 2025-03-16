@@ -1,6 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import {ipcRenderer, contextBridge} from "electron";
+import { FinanceSheetRow } from "./db/WesterhamDatabase";
 
 // Declare types globally
 declare global {
@@ -13,31 +14,45 @@ interface Result {
   err?: any;
 }
 
-export interface ReadFileProps {
-  filename: string;
-  numlines?: number;
+export interface ReadDatabaseRowsProps {
+}
+export interface OnReadDatabaseRowsResult extends Result {
+  rows: FinanceSheetRow[];
 }
 
-export interface OnReadFileResult extends Result {
-  lines: string[];
+export interface WriteRowToDatabaseProps {
+  row: FinanceSheetRow;
 }
-
-export interface WriteToFileProps {
-  csvLines: string[];
-  filename: string;
-}
-
-export interface OnWriteToFileResult extends Result {
+export interface OnWriteRowToDatabaseResult extends Result {
   data: any;
 }
 
+export interface DeleteRowFromDatabaseProps {
+  transactionId: number;
+}
+export interface OnDeleteRowFromDatabaseResult extends Result {
+  data: any;
+}
+
+export interface GetDbLocalPathProps {
+}
+export interface OnGetDbLocalPathResult extends Result {
+  path: string;
+}
+
 const electronAPI = {
-  readFile: async (props: ReadFileProps) => ipcRenderer.send('readFile', props),
-  onReadFile: (callback: (event: any, values: OnReadFileResult) => void) => 
-    ipcRenderer.on('readFileResult', (event, result) => callback(event, result)),
-  writeToFile: async (props: WriteToFileProps) => ipcRenderer.send('writeToFile', props),
-  onWriteToFile: (callback: (event: any, values: OnWriteToFileResult) => void) => 
-    ipcRenderer.on('writeToFileResult', (event, result) => callback(event, result)),
+  readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
+  onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
+    ipcRenderer.on('readDatabaseRowsResult', (event, result) => callback(event, result)),
+  writeRowToDatabase: async (props: WriteRowToDatabaseProps) => ipcRenderer.send('writeRowToDatabase', props),
+  onWriteRowToDatabase: (callback: (event: any, values: OnWriteRowToDatabaseResult) => void) => 
+    ipcRenderer.on('writeRowToDatabaseResult', (event, result) => callback(event, result)),
+  deleteRowFromDatabase: async (props: DeleteRowFromDatabaseProps) => ipcRenderer.send('deleteRowFromDatabase', props),
+  onDeleteRowFromDatabase: (callback: (event: any, values: OnDeleteRowFromDatabaseResult) => void) => 
+    ipcRenderer.on('deleteRowFromDatabaseResult', (event, result) => callback(event, result)),
+  getDbLocalPath: async (props?: GetDbLocalPathProps) => ipcRenderer.send('getDbLocalPath', props),
+  onGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 
+    ipcRenderer.on('getDbLocalPathResult', (event, result) => callback(event, result)),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
