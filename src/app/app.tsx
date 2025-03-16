@@ -4,6 +4,7 @@ import TransactionForm from "./components/TransactionForm";
 import DeleteTransactionForm from "./components/DeleteTransactionForm"; // Import the delete form
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
+import PivotTable from "./components/PivotTable";
 
 const App = () => {
   const [rows, setRows] = useState<FinanceSheetRow[]>([]);
@@ -94,6 +95,12 @@ const App = () => {
         >
           View Transactions
         </button>
+        <button
+          onClick={() => setActiveTab("pivotTable")}
+          className={`py-2 px-4 ${activeTab === "pivotTable" ? "border-b-2 border-blue-500" : ""}`}
+        >
+          View Pivot Table
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -113,6 +120,10 @@ const App = () => {
           </button>
           <DisplayTable headers={["Transaction ID", "Epoch", "Amount", "Info", "Category", "Detail", "Payee"]} data={formatRows(rows)} />
         </div>
+      )}
+
+      {activeTab === "pivotTable" && (
+        <PivotTable data={rows} />
       )}
     </div>
   );
