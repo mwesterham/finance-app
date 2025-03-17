@@ -7,6 +7,7 @@ import { FinanceSheetRow } from "../db/WesterhamDatabase";
 import PivotTable from "./components/PivotTable";
 import MultiFileUploader, { LabeledFile } from "./components/MultiFileUploader";
 import CheckingParser from "./util/parser/CheckingParser";
+import { formatDataTableRows, formatPivotTableRows } from "./util/dataformat";
 
 const App = () => {
   const checkingParser = new CheckingParser();
@@ -27,7 +28,7 @@ const App = () => {
       fetchDatabaseRows(); // Refresh table after insertion
     });
     window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
-      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`, );
+      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`,);
       fetchDatabaseRows();
     });
     window.electronAPI.onReadDatabaseRows((event, values: OnReadDatabaseRowsResult) => {
@@ -82,85 +83,50 @@ const App = () => {
         };
         return financeRow;
       })
-  
+
       await window.electronAPI.writeRowToDatabaseIfMissing({ rows: financeRows });
     };
-  };
-
-  const formatRows = (rows: FinanceSheetRow[]): any[][] => {
-    return rows.map((row) => [
-      row.transactionId ?? -1,
-      row.epoch,
-      row.amount,
-      row.transactionInfo,
-      row.source,
-      row.category ?? "",
-      row.providedDetail ?? "",
-    ]);
   };
 
   return (
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        <button
-          onClick={() => setActiveTab("addTransaction")}
-          className={`py-2 px-4 ${activeTab === "addTransaction" ? "border-b-2 border-blue-500" : ""}`}
-        >
-          Add Transaction
-        </button>
-        <button
-          onClick={() => setActiveTab("deleteTransaction")}
-          className={`py-2 px-4 ${activeTab === "deleteTransaction" ? "border-b-2 border-blue-500" : ""}`}
-        >
-          Delete Transaction
-        </button>
-        <button
-          onClick={() => setActiveTab("viewTransactions")}
-          className={`py-2 px-4 ${activeTab === "viewTransactions" ? "border-b-2 border-blue-500" : ""}`}
-        >
-          View Transactions
-        </button>
-        <button
-          onClick={() => setActiveTab("pivotTable")}
-          className={`py-2 px-4 ${activeTab === "pivotTable" ? "border-b-2 border-blue-500" : ""}`}
-        >
-          View Pivot Table
-        </button>
-        <button
-          onClick={() => setActiveTab("multiFileUploader")}
-          className={`py-2 px-4 ${activeTab === "multiFileUploader" ? "border-b-2 border-blue-500" : ""}`}
-        >
-          View Multi-file Upload
-        </button>
+        {["addTransaction", "deleteTransaction", "viewTransactions", "pivotTable", "multiFileUploader"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`py-2 px-4 ${activeTab === tab ? "border-b-2 border-blue-500" : ""}`}
+          >
+            {tab.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} {/* Format tab names */}
+          </button>
+        ))}
       </div>
 
-      {/* Tab Content */}
-      {activeTab === "addTransaction" && (
+      {/* Tab Content (keeps all in the DOM but hides inactive ones) */}
+      <div className={activeTab !== "addTransaction" ? "hidden" : ""}>
         <TransactionForm formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
-      )}
+      </div>
 
-      {activeTab === "deleteTransaction" && (
+      <div className={activeTab !== "deleteTransaction" ? "hidden" : ""}>
         <DeleteTransactionForm handleDelete={handleDelete} />
-      )}
+      </div>
 
-      {activeTab === "viewTransactions" && (
-        <div className="border p-4">
-          <h2 className="text-lg font-bold mb-2">Transaction Records</h2>
-          <button onClick={fetchDatabaseRows} className="bg-gray-500 text-white p-2 mb-2 w-full">
-            Refresh Table
-          </button>
-          <DisplayTable headers={["Transaction ID", "Epoch", "Amount", "Info", "Source", "Category", "Detail"]} data={formatRows(rows)} />
-        </div>
-      )}
+      <div className={`flex flex-col border p-4 min-w-full ${activeTab !== "viewTransactions" ? "hidden" : ""}`}>
+        <h2 className="text-lg font-bold mb-2">Transaction Records</h2>
+        <button onClick={fetchDatabaseRows} className="bg-gray-500 text-white p-2 mb-2 w-full">
+          Refresh Table
+        </button>
+        <DisplayTable headers={["Date", "Amount", "Info", "Source", "Category", "Detail"]} data={formatDataTableRows(rows)} activeTab={activeTab} />
+      </div>
 
-      {activeTab === "pivotTable" && (
-        <PivotTable data={rows} />
-      )}
+      <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
+        <PivotTable data={formatPivotTableRows(rows)} />
+      </div>
 
-      {activeTab === "multiFileUploader" && (
+      <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>
         <MultiFileUploader onSubmit={handleMultiFileSubmit} />
-      )}
+      </div>
     </div>
   );
 };
