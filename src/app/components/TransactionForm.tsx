@@ -7,9 +7,9 @@ interface TransactionFormProps {
     epoch: number;
     amount: number;
     transactionInfo: string;
+    source: string;
     category?: number;
     providedDetail: string;
-    payee: string;
   };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   handleSubmit: () => void;
@@ -57,6 +57,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ formData, setFormData
         </div>
 
         <div className="space-y-1">
+          <label htmlFor="source" className="block font-medium">Source</label>
+          <input
+            id="source"
+            type="text"
+            placeholder="Source"
+            value={formData.source}
+            onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+            className="border p-2 w-full"
+          />
+        </div>
+
+        <div className="space-y-1">
           <label htmlFor="category" className="block font-medium">Category (Optional)</label>
           <input
             id="category"
@@ -76,18 +88,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ formData, setFormData
             placeholder="Provided Detail (Optional)"
             value={formData.providedDetail}
             onChange={(e) => setFormData({ ...formData, providedDetail: e.target.value })}
-            className="border p-2 w-full"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="payee" className="block font-medium">Payee (Optional)</label>
-          <input
-            id="payee"
-            type="text"
-            placeholder="Payee (Optional)"
-            value={formData.payee}
-            onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
             className="border p-2 w-full"
           />
         </div>

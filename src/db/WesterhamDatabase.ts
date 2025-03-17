@@ -8,10 +8,10 @@ export interface FinanceSheetRow {
   transactionId?: string; // not needed when inserting since created when entered into db
   epoch: number;
   amount: number;
+  source: string;
   transactionInfo: string;
   category?: number;
   providedDetail?: string;
-  payee?: string;
 }
 
 export class WesterhamDatabase {
@@ -50,9 +50,9 @@ export class WesterhamDatabase {
         epoch INTEGER NOT NULL,
         amount REAL NOT NULL,
         transaction_info TEXT NOT NULL,
+        source TEXT NOT NULL,
         category INTEGER,
-        provided_detail TEXT,
-        payee TEXT
+        provided_detail TEXT
     );`;
 
     this.db.exec(queries, (err) => {
@@ -78,32 +78,33 @@ export class WesterhamDatabase {
   }
 
   public insertFinanceSheetRow(row: FinanceSheetRow) {
-    const query = `INSERT INTO ${this.FINANCE_TABLE_NAME} (epoch, amount, transaction_info, category, provided_detail, payee) 
+    const query = `INSERT INTO ${this.FINANCE_TABLE_NAME} (epoch, amount, transaction_info, source, category, provided_detail) 
                    VALUES (?, ?, ?, ?, ?, ?)`;
-    const values = [row.epoch, row.amount, row.transactionInfo, row.category || null, row.providedDetail || null, row.payee || null];
+    const values = [row.epoch, row.amount, row.transactionInfo, row.source, row.category || null, row.providedDetail || null];
 
     this.db.run(query, values, (err) => {
       if (err) {
         console.error("Error inserting FinanceSheetRow:", err);
       } else {
-        console.log(`Successfully inserting into ${this.FINANCE_TABLE_NAME}. FinanceSheetRow{ ${values}}`);
+        console.log(`Successfully inserting into ${this.FINANCE_TABLE_NAME}. FinanceSheetRow{ ${values} }`);
       }
     });
   }
 
   public async getAllFinanceSheetRows(): Promise<FinanceSheetRow[]> {
     return new Promise((resolve, reject) => {
-      const query = `SELECT transaction_id AS transactionId, epoch, amount, transaction_info AS transactionInfo, category, provided_detail AS providedDetail, payee FROM ${this.FINANCE_TABLE_NAME}`;
-      this.db.all(query, [], (err, rows) => {
+      const query = `SELECT transaction_id AS transactionId, epoch, amount, transaction_info AS transactionInfo, source, category, provided_detail AS providedDetail FROM ${this.FINANCE_TABLE_NAME}`;
+      this.db.all<FinanceSheetRow>(query, [], (err, rows) => {
         if (err) {
           reject("Error fetching FinanceSheetRows: " + err);
         } else {
-          resolve(rows as FinanceSheetRow[]);
+          resolve(rows);
           console.log(`Successfully returned all rows from ${this.FINANCE_TABLE_NAME}`);
         }
       });
     });
   }
+
   public async deleteFinanceSheetRow(transactionId: number): Promise<void> {
     const query = `DELETE FROM ${this.FINANCE_TABLE_NAME} WHERE transaction_id = ?`;
     return new Promise((resolve, reject) => {
@@ -113,6 +114,23 @@ export class WesterhamDatabase {
         } else {
           resolve();
           console.log(`Successfully deleted transactionId (${transactionId}) from ${this.FINANCE_TABLE_NAME}`);
+        }
+      });
+    });
+  }
+
+  public async checkIfRowExists(row: FinanceSheetRow): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT COUNT(*) AS count FROM ${this.FINANCE_TABLE_NAME} WHERE epoch = ? AND amount = ? AND transaction_info = ?`;
+      const values = [row.epoch, row.amount, row.transactionInfo];
+  
+      this.db.get<{ count: number }>(query, values, (err, rowCount) => {
+        if (err) {
+          reject("Error checking if row exists: " + err);
+        } else {
+          const found = rowCount.count != 0;
+          resolve(found);
+          console.log(`Checked existence of row: ${values}. Exists: ${found}. Found ${rowCount.count}`);
         }
       });
     });

@@ -34,6 +34,14 @@ export interface OnDeleteRowFromDatabaseResult extends Result {
   data: any;
 }
 
+export interface WriteRowToDatabaseIfMissingProps {
+  rows: FinanceSheetRow[];
+}
+export interface OnWriteRowToDatabaseIfMissingResult extends Result {
+  requestedRowCount: number;
+  writtenRowCount: number;
+}
+
 export interface GetDbLocalPathProps {
 }
 export interface OnGetDbLocalPathResult extends Result {
@@ -44,12 +52,19 @@ const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
     ipcRenderer.on('readDatabaseRowsResult', (event, result) => callback(event, result)),
+
   writeRowToDatabase: async (props: WriteRowToDatabaseProps) => ipcRenderer.send('writeRowToDatabase', props),
   onWriteRowToDatabase: (callback: (event: any, values: OnWriteRowToDatabaseResult) => void) => 
     ipcRenderer.on('writeRowToDatabaseResult', (event, result) => callback(event, result)),
+
   deleteRowFromDatabase: async (props: DeleteRowFromDatabaseProps) => ipcRenderer.send('deleteRowFromDatabase', props),
   onDeleteRowFromDatabase: (callback: (event: any, values: OnDeleteRowFromDatabaseResult) => void) => 
     ipcRenderer.on('deleteRowFromDatabaseResult', (event, result) => callback(event, result)),
+
+  writeRowToDatabaseIfMissing: async (props?: WriteRowToDatabaseIfMissingProps) => ipcRenderer.send('writeRowToDatabaseIfMissing', props),
+  onWriteRowToDatabaseIfMissing: (callback: (event: any, values: OnWriteRowToDatabaseIfMissingResult) => void) => 
+    ipcRenderer.on('writeRowToDatabaseIfMissingResult', (event, result) => callback(event, result)),
+
   getDbLocalPath: async (props?: GetDbLocalPathProps) => ipcRenderer.send('getDbLocalPath', props),
   onGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 
     ipcRenderer.on('getDbLocalPathResult', (event, result) => callback(event, result)),

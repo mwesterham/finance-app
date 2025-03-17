@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import DisplayTable from "./components/DataTable";
 import TransactionForm from "./components/TransactionForm";
 import DeleteTransactionForm from "./components/DeleteTransactionForm"; // Import the delete form
-import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseResult } from "../preload";
+import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
 import PivotTable from "./components/PivotTable";
+import MultiFileUploader, { LabeledFile } from "./components/MultiFileUploader";
+import CheckingParser from "./util/parser/CheckingParser";
 
 const App = () => {
+  const checkingParser = new CheckingParser();
   const [rows, setRows] = useState<FinanceSheetRow[]>([]);
   const [formData, setFormData] = useState({
     epoch: Date.now(),
     amount: 0,
     transactionInfo: "",
+    source: "",
     category: undefined,
     providedDetail: "",
-    payee: "",
   });
   const [activeTab, setActiveTab] = useState<string>("addTransaction");
 
@@ -22,6 +25,10 @@ const App = () => {
     window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
       console.log("Database write result:", values);
       fetchDatabaseRows(); // Refresh table after insertion
+    });
+    window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
+      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`, );
+      fetchDatabaseRows();
     });
     window.electronAPI.onReadDatabaseRows((event, values: OnReadDatabaseRowsResult) => {
       console.log("Database read result length:", values.rows.length);
@@ -58,7 +65,26 @@ const App = () => {
     // Implement deletion logic here
     console.log("Deleting transaction with ID:", transactionId);
     await window.electronAPI.deleteRowFromDatabase({ transactionId });
-    fetchDatabaseRows(); // Refresh table after deletion
+    fetchDatabaseRows();
+  };
+
+  const handleMultiFileSubmit = async (files: LabeledFile[]) => {
+    for (const { file, label } of files) {
+      const text = await file.text();
+      const rows = checkingParser.parse(text);
+
+      const financeRows: FinanceSheetRow[] = rows.map(checkingInput => {
+        const financeRow: FinanceSheetRow = {
+          epoch: checkingInput.date.getTime(),
+          amount: checkingInput.amount,
+          source: label,
+          transactionInfo: checkingInput.detail,
+        };
+        return financeRow;
+      })
+  
+      await window.electronAPI.writeRowToDatabaseIfMissing({ rows: financeRows });
+    };
   };
 
   const formatRows = (rows: FinanceSheetRow[]): any[][] => {
@@ -67,9 +93,9 @@ const App = () => {
       row.epoch,
       row.amount,
       row.transactionInfo,
-      row.category ?? "", // Use empty string if category is undefined
-      row.providedDetail ?? "", // Use empty string if providedDetail is undefined
-      row.payee ?? "", // Use empty string if payee is undefined
+      row.source,
+      row.category ?? "",
+      row.providedDetail ?? "",
     ]);
   };
 
@@ -101,6 +127,12 @@ const App = () => {
         >
           View Pivot Table
         </button>
+        <button
+          onClick={() => setActiveTab("multiFileUploader")}
+          className={`py-2 px-4 ${activeTab === "multiFileUploader" ? "border-b-2 border-blue-500" : ""}`}
+        >
+          View Multi-file Upload
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -118,12 +150,16 @@ const App = () => {
           <button onClick={fetchDatabaseRows} className="bg-gray-500 text-white p-2 mb-2 w-full">
             Refresh Table
           </button>
-          <DisplayTable headers={["Transaction ID", "Epoch", "Amount", "Info", "Category", "Detail", "Payee"]} data={formatRows(rows)} />
+          <DisplayTable headers={["Transaction ID", "Epoch", "Amount", "Info", "Source", "Category", "Detail"]} data={formatRows(rows)} />
         </div>
       )}
 
       {activeTab === "pivotTable" && (
         <PivotTable data={rows} />
+      )}
+
+      {activeTab === "multiFileUploader" && (
+        <MultiFileUploader onSubmit={handleMultiFileSubmit} />
       )}
     </div>
   );
