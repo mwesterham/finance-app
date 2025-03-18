@@ -10,7 +10,7 @@ export interface FinanceSheetRow {
   amount: number;
   source: string;
   transactionInfo: string;
-  category?: number;
+  category?: string;
   providedDetail?: string;
 }
 
@@ -51,7 +51,7 @@ export class WesterhamDatabase {
         amount REAL NOT NULL,
         transaction_info TEXT NOT NULL,
         source TEXT NOT NULL,
-        category INTEGER,
+        category TEXT,
         provided_detail TEXT
     );`;
 

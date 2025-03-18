@@ -33,11 +33,7 @@ const DisplayTable = (props: DispayTableProps) => {
             className: 'dt-head-left dt-body-left',
           },
         ],
-        autoWidth: true,
-        deferRender: true,
-        dom: 'frtip',
-        ordering: true,
-        scrollX: true,
+        pageLength: 25,
       }}>
       <thead>
           <tr>

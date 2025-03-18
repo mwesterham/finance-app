@@ -4,29 +4,29 @@ import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../components/MultiFileUploader";
 
-export interface CheckingInputRow {
+export interface CreditInputRow {
   date: Date;
   amount: number;
   detail: string;
 }
 
-export default class CheckingParser implements IParser<string, CheckingInputRow[]> {
+export default class CreditParser implements IParser<string, CreditInputRow[]> {
   toFinanceRows(input: string): FinanceSheetRow[] {
-    const checkingInputs = this.parse(input);
-    const financeRows: FinanceSheetRow[] = checkingInputs.map(checkingInput => {
+    const creditInputs = this.parse(input);
+    const financeRows: FinanceSheetRow[] = creditInputs.map(creditInput => {
       const financeRow: FinanceSheetRow = {
-        epoch: checkingInput.date.getTime(),
-        amount: checkingInput.amount,
-        source: InputFileLabel.WELLS_FARGO_CHECKING,
-        transactionInfo: checkingInput.detail,
+        epoch: creditInput.date.getTime(),
+        amount: creditInput.amount,
+        source: InputFileLabel.WELLS_FARGO_CREDIT,
+        transactionInfo: creditInput.detail,
       };
       return financeRow;
     });
     return financeRows;
   }
 
-  parse(input: string): CheckingInputRow[] {
-    const rows: CheckingInputRow[] = [];
+  parse(input: string): CreditInputRow[] {
+    const rows: CreditInputRow[] = [];
 
     Papa.parse(input, {
       header: false,

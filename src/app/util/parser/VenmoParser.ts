@@ -1,32 +1,32 @@
 import Papa from "papaparse";
 import { IParser } from "./IParser";
-import { cleanDate, cleanNumber } from "../util";
+import { cleanDate, cleanNumber, formatVenmoNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../components/MultiFileUploader";
 
-export interface CheckingInputRow {
+export interface VenmoInputRow {
   date: Date;
   amount: number;
   detail: string;
 }
 
-export default class CheckingParser implements IParser<string, CheckingInputRow[]> {
+export default class VenmoParser implements IParser<string, VenmoInputRow[]> {
   toFinanceRows(input: string): FinanceSheetRow[] {
-    const checkingInputs = this.parse(input);
-    const financeRows: FinanceSheetRow[] = checkingInputs.map(checkingInput => {
+    const venmoInputs = this.parse(input);
+    const financeRows: FinanceSheetRow[] = venmoInputs.map(venmoInput => {
       const financeRow: FinanceSheetRow = {
-        epoch: checkingInput.date.getTime(),
-        amount: checkingInput.amount,
-        source: InputFileLabel.WELLS_FARGO_CHECKING,
-        transactionInfo: checkingInput.detail,
+        epoch: venmoInput.date.getTime(),
+        amount: venmoInput.amount,
+        source: InputFileLabel.VENMO,
+        transactionInfo: venmoInput.detail,
       };
       return financeRow;
     });
     return financeRows;
   }
 
-  parse(input: string): CheckingInputRow[] {
-    const rows: CheckingInputRow[] = [];
+  parse(input: string): VenmoInputRow[] {
+    const rows: VenmoInputRow[] = [];
 
     Papa.parse(input, {
       header: false,
@@ -37,11 +37,13 @@ export default class CheckingParser implements IParser<string, CheckingInputRow[
       },
       complete: (result: any) => {
         const data = result.data as any[][]; // Data from PapaParse
-        data.forEach(row => {
+        
+        // Skip the first 4 rows, and last row
+        data.slice(4, -1).forEach(row => {
           rows.push({
-            date: cleanDate(row[0]),
-            amount: cleanNumber(row[1]),
-            detail: row[4],
+            date: cleanDate(row[2]),
+            amount: formatVenmoNumber(row[8]),
+            detail: row[5],
           });
         });
       },

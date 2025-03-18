@@ -4,13 +4,20 @@ import TransactionForm from "./components/TransactionForm";
 import DeleteTransactionForm from "./components/DeleteTransactionForm"; // Import the delete form
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
-import PivotTable from "./components/PivotTable";
-import MultiFileUploader, { LabeledFile } from "./components/MultiFileUploader";
+import MultiFileUploader, { InputFileLabel, LabeledFile } from "./components/MultiFileUploader";
 import CheckingParser from "./util/parser/CheckingParser";
+import CreditParser from "./util/parser/CreditParser";
+import VenmoParser from "./util/parser/VenmoParser";
+import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
 import { formatDataTableRows, formatPivotTableRows } from "./util/dataformat";
+import CustomPivotTable from "./components/PivotTable";
 
 const App = () => {
   const checkingParser = new CheckingParser();
+  const creditParser = new CreditParser();
+  const venmoParser = new VenmoParser();
+  const matthewSnapshotParser = new MatthewSnapshotParser();
+
   const [rows, setRows] = useState<FinanceSheetRow[]>([]);
   const [formData, setFormData] = useState({
     epoch: Date.now(),
@@ -72,19 +79,50 @@ const App = () => {
   const handleMultiFileSubmit = async (files: LabeledFile[]) => {
     for (const { file, label } of files) {
       const text = await file.text();
-      const rows = checkingParser.parse(text);
-
-      const financeRows: FinanceSheetRow[] = rows.map(checkingInput => {
-        const financeRow: FinanceSheetRow = {
-          epoch: checkingInput.date.getTime(),
-          amount: checkingInput.amount,
-          source: label,
-          transactionInfo: checkingInput.detail,
-        };
-        return financeRow;
-      })
-
-      await window.electronAPI.writeRowToDatabaseIfMissing({ rows: financeRows });
+      switch (label) {
+        case InputFileLabel.WELLS_FARGO_CHECKING: {
+          const rows = checkingParser.toFinanceRows(text);
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.WELLS_FARGO_CREDIT: {
+          const rows = creditParser.toFinanceRows(text);
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.VENMO: {
+          const rows = venmoParser.toFinanceRows(text);
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_VENMO: {
+          const rows = matthewSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.VENMO
+          });
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT: {
+          const rows = matthewSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.WELLS_FARGO_CREDIT
+          });
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING: {
+          const rows = matthewSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.WELLS_FARGO_CHECKING
+          });
+          await window.electronAPI.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        default: {
+          console.log(`Invalid label ${label}`)
+        }
+      }
     };
   };
 
@@ -121,7 +159,7 @@ const App = () => {
       </div>
 
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
-        <PivotTable data={formatPivotTableRows(rows)} />
+        <CustomPivotTable data={formatPivotTableRows(rows)} />
       </div>
 
       <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>

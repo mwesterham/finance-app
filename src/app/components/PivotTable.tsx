@@ -3,13 +3,17 @@ import "react-pivottable/pivottable.css";
 import TableRenderers from 'react-pivottable/TableRenderers';
 import Plot from 'react-plotly.js';
 import createPlotlyRenderers from 'react-pivottable/PlotlyRenderers';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PivotTableProps } from "react-pivottable";
 
 // create Plotly renderers via dependency injection
 const PlotlyRenderers = createPlotlyRenderers(Plot);
 
-const PivotTable = ({ data }: { data: any[] }) => {
+export interface CustomPivotTableProps { 
+  data: any[];
+}
+
+const CustomPivotTable = (props: CustomPivotTableProps) => {
   const [pivotState, setPivotState] = useState({
     rendererName: "Table Heatmap",
     rows: ["year", "month"],
@@ -17,6 +21,11 @@ const PivotTable = ({ data }: { data: any[] }) => {
     aggregatorName: "Sum",
     vals: ["amount"],
   } as PivotTableProps);
+  const [data, setData] = useState(props.data);
+
+  useEffect(() => {
+    setData(props.data);
+  }, [props.data])
 
   // Custom color scale generator for table
   const tableColorScaleGenerator = (values: number[]) => {
@@ -52,4 +61,4 @@ const PivotTable = ({ data }: { data: any[] }) => {
   );
 };
 
-export default PivotTable;
+export default CustomPivotTable;
