@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import DisplayTable from "./components/DataTable";
 import TransactionForm from "./components/TransactionForm";
 import DeleteTransactionForm from "./components/DeleteTransactionForm"; // Import the delete form
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
@@ -12,6 +11,7 @@ import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser
 import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
 import { formatDataTableRows, formatPivotTableRows } from "./util/dataformat";
 import CustomPivotTable from "./components/PivotTable";
+import { TanstackDataTable } from "./components/TanstackDatatable";
 
 const App = () => {
   const checkingParser = new CheckingParser();
@@ -29,7 +29,7 @@ const App = () => {
     category: undefined,
     providedDetail: "",
   });
-  const [activeTab, setActiveTab] = useState<string>("addTransaction");
+  const [activeTab, setActiveTab] = useState<string>("tanstackTable");
 
   useEffect(() => {
     window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
@@ -132,7 +132,7 @@ const App = () => {
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        {["addTransaction", "deleteTransaction", "viewTransactions", "pivotTable", "multiFileUploader"].map((tab) => (
+        {["tanstackTable", "pivotTable", "addTransaction", "deleteTransaction", "multiFileUploader"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -152,20 +152,16 @@ const App = () => {
         <DeleteTransactionForm handleDelete={handleDelete} />
       </div>
 
-      <div className={`flex flex-col border p-4 min-w-full ${activeTab !== "viewTransactions" ? "hidden" : ""}`}>
-        <h2 className="text-lg font-bold mb-2">Transaction Records</h2>
-        <button onClick={fetchDatabaseRows} className="bg-gray-500 text-white p-2 mb-2 w-full">
-          Refresh Table
-        </button>
-        <DisplayTable headers={["Date", "Amount", "Info", "Source", "Category", "Detail"]} data={formatDataTableRows(rows)} activeTab={activeTab} />
-      </div>
-
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
         <CustomPivotTable data={formatPivotTableRows(rows)} />
       </div>
 
       <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>
         <MultiFileUploader onSubmit={handleMultiFileSubmit} />
+      </div>
+
+      <div className={activeTab !== "tanstackTable" ? "hidden" : ""}>
+        <TanstackDataTable data={rows}/>
       </div>
     </div>
   );
