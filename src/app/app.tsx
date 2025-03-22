@@ -8,6 +8,7 @@ import MultiFileUploader, { InputFileLabel, LabeledFile } from "./components/Mul
 import CheckingParser from "./util/parser/CheckingParser";
 import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
+import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
 import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
 import { formatDataTableRows, formatPivotTableRows } from "./util/dataformat";
 import CustomPivotTable from "./components/PivotTable";
@@ -17,6 +18,7 @@ const App = () => {
   const creditParser = new CreditParser();
   const venmoParser = new VenmoParser();
   const matthewSnapshotParser = new MatthewSnapshotParser();
+  const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
 
   const [rows, setRows] = useState<FinanceSheetRow[]>([]);
   const [formData, setFormData] = useState({
@@ -96,7 +98,7 @@ const App = () => {
           break;
         }
         case InputFileLabel.MATTHEW_SNAPSHOT_VENMO: {
-          const rows = matthewSnapshotParser.toFinanceRows({ 
+          const rows = matthewVenmoSnapshotParser.toFinanceRows({ 
             text: text, 
             label: InputFileLabel.VENMO
           });
