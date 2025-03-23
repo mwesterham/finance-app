@@ -9,8 +9,7 @@ import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
 import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
 import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
-import { formatDataTableRows, formatPivotTableRows } from "./util/dataformat";
-import CustomPivotTable from "./components/PivotTable";
+import { formatPivotTableRows } from "./util/dataformat";
 import { TanstackDataTable } from "./components/TanstackDatatable";
 
 const App = () => {
@@ -153,7 +152,7 @@ const App = () => {
       </div>
 
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
-        <CustomPivotTable data={formatPivotTableRows(rows)} />
+        Nothing yet!
       </div>
 
       <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>
