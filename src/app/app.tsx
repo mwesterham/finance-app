@@ -9,8 +9,7 @@ import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
 import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
 import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
-import { formatPivotTableRows } from "./util/dataformat";
-import { TanstackDataTable } from "./components/TanstackDatatable";
+import { TanstackDataTable } from "./components/maingrid/TanstackDatatable";
 
 const App = () => {
   const checkingParser = new CheckingParser();
