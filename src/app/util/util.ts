@@ -1,3 +1,5 @@
+import { Column } from "@tanstack/react-table";
+
 export const cleanNumber = (str: string): number => {
   return parseFloat(str.replace(/[^0-9.-]/g, "").trim());
 }
@@ -25,3 +27,9 @@ export const cleanDate = (str: string): Date => {
 
 export const cx = (...classNames: any[]) =>
   classNames.filter(Boolean).join(" ");
+
+export const getPossibleValuesFromCol = (column: Column<any>) => {
+  return Array.from(column.getFacetedUniqueValues().keys())
+    .sort()
+    .slice(0, 5000);
+}

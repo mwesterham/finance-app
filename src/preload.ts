@@ -48,6 +48,14 @@ export interface OnGetDbLocalPathResult extends Result {
   path: string;
 }
 
+export interface UpdateRowInDatabaseProps {
+  transactionId: string;
+  row: FinanceSheetRow;
+}
+export interface OnUpdateRowInDatabaseResult extends Result {
+  data: any;
+}
+
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
@@ -68,6 +76,10 @@ const electronAPI = {
   getDbLocalPath: async (props?: GetDbLocalPathProps) => ipcRenderer.send('getDbLocalPath', props),
   onGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 
     ipcRenderer.on('getDbLocalPathResult', (event, result) => callback(event, result)),
+
+  updateRowInDatabase: async (props?: UpdateRowInDatabaseProps) => ipcRenderer.send('updateRowInDatabase', props),
+  onUpdateRowInDatabase: (callback: (event: any, values: OnUpdateRowInDatabaseResult) => void) => 
+    ipcRenderer.on('onUpdateRowInDatabase', (event, result) => callback(event, result)),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -139,4 +139,25 @@ export class WesterhamDatabase {
   public getDbPath(): string {
     return this.dbPath;
   }
+
+  public async updateFinanceSheetRow(transactionId: string, updatedRow: Partial<FinanceSheetRow>): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Prepare update query based on provided updated fields
+      const setStatements = Object.keys(updatedRow)
+        .map(key => `${key.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()} = ?`)
+        .join(', ');
+      
+      const values = [...Object.values(updatedRow), transactionId];
+      const query = `UPDATE ${this.FINANCE_TABLE_NAME} SET ${setStatements} WHERE transaction_id = ?`;
+
+      this.db.run(query, values, function (err) {
+        if (err) {
+          reject(`Error updating FinanceSheetRow: ${err}`);
+        } else {
+          resolve();
+          console.log(`Successfully updated row with transaction_id = ${transactionId}`);
+        }
+      });
+    });
+  }
 }

@@ -13,27 +13,58 @@ import {
 } from '@tanstack/react-table';
 import { filterFns } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../../db/WesterhamDatabase';
-import { useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
 import { RowData } from "@tanstack/react-table";
 import { customFormatDate } from '../../util/time';
 import Filter from './Filter';
 import ErrorBoundary from '../ErrorBoundary';
-import { cx } from '../../util/util';
+import { cx, getPossibleValuesFromCol } from '../../util/util';
+import EditableInput from '../EditableInput';
+import { OnUpdateRowInDatabaseResult } from '../../../preload';
 
 declare module '@tanstack/react-table' {
-  //allows us to define custom properties for our columns
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select' | 'search' | 'daterange'
   }
 }
+
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData extends RowData> {
+    updateData: (rowIndex: number, columnId: string, value: unknown) => void
+  }
+}
+
+const updateRow = async (transactionId: string, row: FinanceSheetRow) => {
+  await window.electronAPI.updateRowInDatabase({
+    transactionId,
+    row,
+  });
+};
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
 
 const columns = [
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
-    cell: info => <i>{customFormatDate(info.getValue())}</i>,
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const localDate = new Date(val + 'T00:00:00');
+        const num = localDate.getTime();
+        setValue(num);
+        table.options.meta?.updateData(row.index, column.id, num); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          epoch: num
+        });
+      };
+
+      return <EditableInput value={value} type="date" onChange={onChange}/>;
+    },
     header: () => <span>Date</span>,
     footer: info => info.column.id,
     meta: {
@@ -49,13 +80,46 @@ const columns = [
   }),
   columnHelper.accessor('amount', {
     header: () => 'Amount',
-    cell: info => info.renderValue(),
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const num = Number(val);
+        setValue(num);
+        table.options.meta?.updateData(row.index, column.id, num); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          amount: num
+        });
+      };
+
+      return <EditableInput value={value} type="number" onChange={onChange}/>;
+    },
     footer: info => info.column.id,
     meta: {
       filterVariant: 'range',
     },
   }),
   columnHelper.accessor('source', {
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const str = String(val);
+        setValue(str);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          source: str
+        });
+      };
+
+      return <EditableInput value={value} type="text" onChange={onChange}/>;
+    },
     header: 'Source',
     footer: info => info.column.id,
     meta: {
@@ -63,6 +127,23 @@ const columns = [
     },
   }),
   columnHelper.accessor('transactionInfo', {
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const str = String(val);
+        setValue(str);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          transactionInfo: str
+        });
+      };
+
+      return <EditableInput value={value} type="text" onChange={onChange}/>;
+    },
     header: 'Transaction Info',
     footer: info => info.column.id,
     meta: {
@@ -70,6 +151,23 @@ const columns = [
     },
   }),
   columnHelper.accessor('category', {
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const str = String(val);
+        setValue(str);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          category: str
+        });
+      };
+      
+      return <EditableInput value={value} type="text" suggestions={getPossibleValuesFromCol(column)} onChange={onChange}/>;
+    },
     header: 'Category',
     footer: info => info.column.id,
     filterFn: (row, columnId, filterValue, addMeta) => {
@@ -83,6 +181,23 @@ const columns = [
     },
   }),
   columnHelper.accessor('providedDetail', {
+    cell: ({ getValue, row, column, table }) => {
+      const initialValue = getValue();
+      const [value, setValue] = useState(initialValue);
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        const str = String(val);
+        setValue(str);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          providedDetail: str
+        });
+      };
+
+      return <EditableInput value={value} type="text" onChange={onChange}/>;
+    },
     header: 'Provided Detail',
     footer: info => info.column.id,
     meta: {
@@ -96,6 +211,17 @@ export interface TanstackDataTableProps {
 }
 
 export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
+  const [rowData, setRowData] = useState<FinanceSheetRow[]>(data);
+  useEffect(() => {
+    setRowData(data);
+  }, [data]);
+  
+  useEffect(() => {
+    window.electronAPI.onUpdateRowInDatabase((event, values: OnUpdateRowInDatabaseResult) => {
+      console.log("Database update result:", values);
+    });
+  }, []);
+  
   const [columnVisibility, setColumnVisibility] = useState({
     transactionId: false,
   });
@@ -105,12 +231,13 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
-  )
+  );
+  const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
 
   const rerender = useReducer(() => ({}), {})[1];
 
   const table = useReactTable({
-    data,
+    data: rowData,
     columns,
     state: { columnSizing, sorting, columnVisibility, columnFilters },
     initialState: { pagination: { pageSize: 20 } },
@@ -124,6 +251,23 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    meta: {
+      updateData: (rowIndex, columnId, value) => {
+        // Skip page index reset until after next rerender
+        skipAutoResetPageIndex();
+        setRowData(old =>
+          old.map((row, index) => {
+            if (index === rowIndex) {
+              return {
+                ...old[rowIndex]!,
+                [columnId]: value,
+              }
+            }
+            return row
+          })
+        );
+      },
+    },
   });
 
   return (
@@ -155,9 +299,9 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
         <tbody>
           {table.getRowModel().rows.map(row => (
             <ErrorBoundary key={`boundary-${row.id}`}>
-              <tr key={row.id} className="border-b hover:bg-gray-50">
+              <tr key={row.id} className="border-b">
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300">
+                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -184,3 +328,19 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
     </div>
   );
 };
+
+function useSkipper() {
+  const shouldSkipRef = useRef(true)
+  const shouldSkip = shouldSkipRef.current
+
+  // Wrap a function with this to skip a pagination reset temporarily
+  const skip = useCallback(() => {
+    shouldSkipRef.current = false
+  }, [])
+
+  useEffect(() => {
+    shouldSkipRef.current = true
+  })
+
+  return [shouldSkip, skip] as const
+}

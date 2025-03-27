@@ -1,5 +1,6 @@
 import { Column } from "@tanstack/table-core/build/lib";
 import { useEffect, useMemo, useState } from "react";
+import { getPossibleValuesFromCol } from "../../util/util";
 
 interface FilterProps { 
   column: Column<any, unknown> 
@@ -15,9 +16,7 @@ const Filter = (props: FilterProps) => {
     () =>
       filterVariant === 'range'
         ? []
-        : Array.from(column.getFacetedUniqueValues().keys())
-            .sort()
-            .slice(0, 5000),
+        : getPossibleValuesFromCol(column),
     [column.getFacetedUniqueValues(), filterVariant]
   )
 
