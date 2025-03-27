@@ -21,3 +21,7 @@ export const cleanDate = (str: string): Date => {
   date.setHours(0, 0, 0, 0);
   return date;
 };
+
+
+export const cx = (...classNames: any[]) =>
+  classNames.filter(Boolean).join(" ");

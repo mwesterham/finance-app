@@ -11,6 +11,7 @@ import {
   getFacetedMinMaxValues,
   getFilteredRowModel
 } from '@tanstack/react-table';
+import { filterFns } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../../db/WesterhamDatabase';
 import { useEffect, useReducer, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
@@ -18,11 +19,12 @@ import { RowData } from "@tanstack/react-table";
 import { customFormatDate } from '../../util/time';
 import Filter from './Filter';
 import ErrorBoundary from '../ErrorBoundary';
+import { cx } from '../../util/util';
 
 declare module '@tanstack/react-table' {
   //allows us to define custom properties for our columns
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: 'text' | 'range' | 'select'
+    filterVariant?: 'text' | 'range' | 'select' | 'search' | 'daterange'
   }
 }
 
@@ -35,7 +37,7 @@ const columns = [
     header: () => <span>Date</span>,
     footer: info => info.column.id,
     meta: {
-      filterVariant: 'range',
+      filterVariant: 'daterange',
     },
   }),
   columnHelper.accessor('transactionId', {
@@ -64,12 +66,18 @@ const columns = [
     header: 'Transaction Info',
     footer: info => info.column.id,
     meta: {
-      filterVariant: 'select',
+      filterVariant: 'search',
     },
   }),
   columnHelper.accessor('category', {
     header: 'Category',
     footer: info => info.column.id,
+    filterFn: (row, columnId, filterValue, addMeta) => {
+      if (filterValue === "only_null") {
+        return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
+      }
+      return filterFns.includesString(row, columnId, filterValue, addMeta); // Return all rows if filter is not active
+    },
     meta: {
       filterVariant: 'select',
     },
@@ -78,7 +86,7 @@ const columns = [
     header: 'Provided Detail',
     footer: info => info.column.id,
     meta: {
-      filterVariant: 'select',
+      filterVariant: 'search',
     },
   }),
 ];
@@ -92,7 +100,9 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
     transactionId: false,
   });
   const [columnSizing, setColumnSizing] = useState<{ [key: string]: number }>({});
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState([
+    { id: "epoch", desc: true }
+  ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   )
@@ -104,11 +114,6 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
     columns,
     state: { columnSizing, sorting, columnVisibility, columnFilters },
     initialState: { pagination: { pageSize: 20 } },
-    defaultColumn: {
-      size: 200,
-      minSize: 50,
-      maxSize: 500,
-    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -130,11 +135,8 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
               {headerGroup.headers.map(header => (
                 <th key={header.id} colSpan={header.colSpan} className="px-4 py-2 text-left">
                   {header.isPlaceholder ? null : (
-                    <div
-                      className={header.column.getCanSort() ? 'cursor-pointer flex items-center' : ''}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <span className='pr-2'>
+                    <div className='flex items-center'> 
+                      <span className={cx(`${header.column.getCanSort() ? 'cursor-pointer' : ''}`, 'pr-2')} onClick={header.column.getToggleSortingHandler()}>
                         {header.column.getIsSorted() === 'asc' ? <GoArrowUp /> : header.column.getIsSorted() === 'desc' ? <GoArrowDown /> : <GoArrowSwitch />}
                       </span>
                       {flexRender(header.column.columnDef.header, header.getContext())}
