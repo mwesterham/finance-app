@@ -4,7 +4,7 @@ import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../components/MultiFileUploader";
 
-export interface MatthewSnapshotRow {
+export interface MatthewCheckingSnapshotRow {
   date: Date;
   amount: number;
   category: string;
@@ -12,13 +12,13 @@ export interface MatthewSnapshotRow {
   transactionNotes: string;
 }
 
-export interface MatthewSnapshotParserInput {
+export interface MatthewCheckingSnapshotParserInput {
   text: string;
   label: InputFileLabel;
 }
 
-export default class MatthewSnapshotParser implements IParser<MatthewSnapshotParserInput, MatthewSnapshotRow[]> {
-  toFinanceRows(input: MatthewSnapshotParserInput): FinanceSheetRow[] {
+export default class MatthewCheckingSnapshotParser implements IParser<MatthewCheckingSnapshotParserInput, MatthewCheckingSnapshotRow[]> {
+  toFinanceRows(input: MatthewCheckingSnapshotParserInput): FinanceSheetRow[] {
     const rows = this.parse(input);
     const financeRows: FinanceSheetRow[] = rows.map(row => {
       const financeRow: FinanceSheetRow = {
@@ -34,8 +34,8 @@ export default class MatthewSnapshotParser implements IParser<MatthewSnapshotPar
     return financeRows;
   }
 
-  parse(input: MatthewSnapshotParserInput): MatthewSnapshotRow[] {
-    const rows: MatthewSnapshotRow[] = [];
+  parse(input: MatthewCheckingSnapshotParserInput): MatthewCheckingSnapshotRow[] {
+    const rows: MatthewCheckingSnapshotRow[] = [];
 
     Papa.parse(input.text, {
       header: false,

@@ -6,14 +6,16 @@ import CheckingParser from "./util/parser/CheckingParser";
 import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
 import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
-import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
+import MatthewCheckingSnapshotParser from "./util/parser/MatthewCheckingSnapshotParser";
 import { TanstackDataTable } from "./components/TanstackDatatable";
+import MatthewCreditSnapshotParser from "./util/parser/MatthewCreditSnapshotParser";
 
 const App = () => {
   const checkingParser = new CheckingParser();
   const creditParser = new CreditParser();
   const venmoParser = new VenmoParser();
-  const matthewSnapshotParser = new MatthewSnapshotParser();
+  const matthewCheckingSnapshotParser = new MatthewCheckingSnapshotParser();
+  const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
   const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
 
   const [rows, setRows] = useState<FinanceSheetRow[]>([]);
@@ -102,7 +104,7 @@ const App = () => {
           break;
         }
         case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT: {
-          const rows = matthewSnapshotParser.toFinanceRows({ 
+          const rows = matthewCreditSnapshotParser.toFinanceRows({ 
             text: text, 
             label: InputFileLabel.WELLS_FARGO_CREDIT
           });
@@ -110,7 +112,7 @@ const App = () => {
           break;
         }
         case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING: {
-          const rows = matthewSnapshotParser.toFinanceRows({ 
+          const rows = matthewCheckingSnapshotParser.toFinanceRows({ 
             text: text, 
             label: InputFileLabel.WELLS_FARGO_CHECKING
           });
