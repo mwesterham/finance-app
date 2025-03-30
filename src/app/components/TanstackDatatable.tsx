@@ -151,6 +151,7 @@ const columns = [
           value={value}
           type="text"
           displayBody={<>{value}</>}
+          suggestions={getPossibleValuesFromCol(column)}
           onChange={onChange}
         />
       </>;
