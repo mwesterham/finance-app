@@ -1,6 +1,6 @@
 import { Column } from "@tanstack/table-core/build/lib";
 import { useEffect, useMemo, useState } from "react";
-import { getPossibleValuesFromCol } from "../../util/util";
+import { getPossibleValuesFromCol } from "../util/util";
 
 interface FilterProps { 
   column: Column<any, unknown> 
@@ -93,6 +93,7 @@ const Filter = (props: FilterProps) => {
     case 'select': {
       return (
         <select
+          className="p-1"
           onChange={e => column.setFilterValue(e.target.value)}
           value={columnFilterValue?.toString()}
         >

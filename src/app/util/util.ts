@@ -33,3 +33,10 @@ export const getPossibleValuesFromCol = (column: Column<any>) => {
     .sort()
     .slice(0, 5000);
 }
+
+export const formatAmount = (amount: number) => {
+  if (amount < 0) {
+    return `($${Math.abs(amount).toFixed(2)})`;  // Display negative in parentheses
+  }
+  return `$${amount.toFixed(2)}`;
+};

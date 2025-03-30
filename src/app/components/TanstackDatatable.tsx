@@ -12,16 +12,21 @@ import {
   getFilteredRowModel
 } from '@tanstack/react-table';
 import { filterFns } from "@tanstack/table-core";
-import { FinanceSheetRow } from '../../../db/WesterhamDatabase';
+import { FinanceSheetRow } from '../../db/WesterhamDatabase';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
+import { MdDeleteForever } from "react-icons/md";
 import { RowData } from "@tanstack/react-table";
-import { customFormatDate } from '../../util/time';
 import Filter from './Filter';
-import ErrorBoundary from '../ErrorBoundary';
-import { cx, getPossibleValuesFromCol } from '../../util/util';
-import EditableInput from '../EditableInput';
-import { OnUpdateRowInDatabaseResult } from '../../../preload';
+import ErrorBoundary from './ErrorBoundary';
+import { cx, formatAmount, getPossibleValuesFromCol } from '../util/util';
+import EditableInput from './EditableInput';
+import { OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
+import ConfirmAction from './ConfirmAction';
+import WithTooltip from './WithTooltip';
+import TransactionDetails from './TransactionDetails';
+import { customFormatDate, epochToDateStr } from '../util/time';
+
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -63,7 +68,14 @@ const columns = [
         });
       };
 
-      return <EditableInput value={value} type="date" onChange={onChange}/>;
+      return <>
+        <EditableInput
+          value={epochToDateStr(value)}
+          type="date"
+          displayBody={<>{customFormatDate(value)}</>}
+          onChange={onChange}
+        />
+      </>;
     },
     header: () => <span>Date</span>,
     footer: info => info.column.id,
@@ -95,7 +107,16 @@ const columns = [
         });
       };
 
-      return <EditableInput value={value} type="number" onChange={onChange}/>;
+      const amt = formatAmount(value);
+
+      return <>
+        <EditableInput
+          value={value}
+          type="number"
+          displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
+          onChange={onChange}
+        />
+      </>;
     },
     footer: info => info.column.id,
     meta: {
@@ -118,7 +139,14 @@ const columns = [
         });
       };
 
-      return <EditableInput value={value} type="text" onChange={onChange}/>;
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
+      </>;
     },
     header: 'Source',
     footer: info => info.column.id,
@@ -142,7 +170,14 @@ const columns = [
         });
       };
 
-      return <EditableInput value={value} type="text" onChange={onChange}/>;
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
+      </>;
     },
     header: 'Transaction Info',
     footer: info => info.column.id,
@@ -165,8 +200,16 @@ const columns = [
           category: str
         });
       };
-      
-      return <EditableInput value={value} type="text" suggestions={getPossibleValuesFromCol(column)} onChange={onChange}/>;
+
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          suggestions={getPossibleValuesFromCol(column)}
+          onChange={onChange}
+        />
+      </>;
     },
     header: 'Category',
     footer: info => info.column.id,
@@ -196,7 +239,14 @@ const columns = [
         });
       };
 
-      return <EditableInput value={value} type="text" onChange={onChange}/>;
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
+      </>;
     },
     header: 'Provided Detail',
     footer: info => info.column.id,
@@ -215,13 +265,35 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
   useEffect(() => {
     setRowData(data);
   }, [data]);
-  
+
   useEffect(() => {
     window.electronAPI.onUpdateRowInDatabase((event, values: OnUpdateRowInDatabaseResult) => {
       console.log("Database update result:", values);
     });
   }, []);
-  
+
+  useEffect(() => {
+    window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
+      console.log("Database write result:", values);
+      fetchDatabaseRows(); // Refresh table after insertion
+    });
+    window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
+      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`,);
+      fetchDatabaseRows();
+    });
+  }, []);
+
+  const fetchDatabaseRows = async () => {
+    await window.electronAPI.readDatabaseRows();
+  };
+
+  const deleteRow = async (transactionId: number) => {
+    // Implement deletion logic here
+    console.log("Deleting transaction with ID:", transactionId);
+    await window.electronAPI.deleteRowFromDatabase({ transactionId });
+    fetchDatabaseRows();
+  };
+
   const [columnVisibility, setColumnVisibility] = useState({
     transactionId: false,
   });
@@ -276,10 +348,13 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} className="border-b border-gray-300">
+              <th key={`${headerGroup.id}-custom-1`} className="px-4 py-2 text-left">
+                Manage
+              </th>
               {headerGroup.headers.map(header => (
                 <th key={header.id} colSpan={header.colSpan} className="px-4 py-2 text-left">
                   {header.isPlaceholder ? null : (
-                    <div className='flex items-center'> 
+                    <div className='flex items-center'>
                       <span className={cx(`${header.column.getCanSort() ? 'cursor-pointer' : ''}`, 'pr-2')} onClick={header.column.getToggleSortingHandler()}>
                         {header.column.getIsSorted() === 'asc' ? <GoArrowUp /> : header.column.getIsSorted() === 'desc' ? <GoArrowDown /> : <GoArrowSwitch />}
                       </span>
@@ -300,8 +375,21 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
           {table.getRowModel().rows.map(row => (
             <ErrorBoundary key={`boundary-${row.id}`}>
               <tr key={row.id} className="border-b">
+                <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
+                  <WithTooltip text='Delete' position='top'>
+                    <ConfirmAction
+                      onConfirm={() => deleteRow(Number(row.original.transactionId))}
+                      title={`Delete transaction forever?`}
+                      body={<TransactionDetails transaction={row.original} />}
+                    >
+                      <MdDeleteForever
+                        className="text-red-500 cursor-pointer hover:text-red-700 min-w-5 min-h-5"
+                      />
+                    </ConfirmAction>
+                  </WithTooltip>
+                </td>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 hover:bg-gray-50">
+                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import TransactionForm from "./components/TransactionForm";
-import DeleteTransactionForm from "./components/DeleteTransactionForm"; // Import the delete form
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
 import MultiFileUploader, { InputFileLabel, LabeledFile } from "./components/MultiFileUploader";
@@ -9,7 +8,7 @@ import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
 import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
 import MatthewSnapshotParser from "./util/parser/MatthewSnapshotParser";
-import { TanstackDataTable } from "./components/maingrid/TanstackDatatable";
+import { TanstackDataTable } from "./components/TanstackDatatable";
 
 const App = () => {
   const checkingParser = new CheckingParser();
@@ -130,7 +129,7 @@ const App = () => {
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        {["tanstackTable", "pivotTable", "addTransaction", "deleteTransaction", "multiFileUploader"].map((tab) => (
+        {["tanstackTable", "pivotTable", "addTransaction", "multiFileUploader"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -144,10 +143,6 @@ const App = () => {
       {/* Tab Content (keeps all in the DOM but hides inactive ones) */}
       <div className={activeTab !== "addTransaction" ? "hidden" : ""}>
         <TransactionForm formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
-      </div>
-
-      <div className={activeTab !== "deleteTransaction" ? "hidden" : ""}>
-        <DeleteTransactionForm handleDelete={handleDelete} />
       </div>
 
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>

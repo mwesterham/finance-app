@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { GoPencil, GoCheck, GoX } from 'react-icons/go';
-import { customFormatDate } from '../util/time';
 
 interface EditableInputProps {
   value: any;
   type: string;
   suggestions?: any[];
+  displayBody: ReactNode;
   onChange: (newValue: any) => void;
 }
 
-const EditableInput = ({ value, type, suggestions, onChange }: EditableInputProps) => {
+const EditableInput = ({ value, type, suggestions, displayBody, onChange }: EditableInputProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const [initialValue, setInitialValue] = useState(value);
@@ -56,9 +56,9 @@ const EditableInput = ({ value, type, suggestions, onChange }: EditableInputProp
         </div>
       ) : (
         <div className="flex items-center w-full justify-between">
-          <span>{type == "date" ? customFormatDate(value) : value}</span>
+          <span>{displayBody}</span>
           <GoPencil
-            className="text-blue-500 cursor-pointer hover:text-blue-700 min-w-5"
+            className="text-blue-500 cursor-pointer hover:text-blue-700 min-w-5 hidden group-hover:block"
             onClick={handleClickEdit}
           />
         </div>
