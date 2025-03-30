@@ -58,7 +58,7 @@ const EditableInput = ({ value, type, suggestions, displayBody, onChange }: Edit
         <div className="flex items-center w-full justify-between">
           <span>{displayBody}</span>
           <GoPencil
-            className="text-blue-500 cursor-pointer hover:text-blue-700 min-w-5 hidden group-hover:block"
+            className="opacity-0 group-hover:opacity-100 text-blue-500 cursor-pointer hover:text-blue-700 min-w-5"
             onClick={handleClickEdit}
           />
         </div>

@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Initial state of the element */
+.highlightGreenEasy {
+  animation: fadeInHighlight 2s ease-in-out;
+  background-color: rgb(212, 255, 212);  /* Choose your highlight color */
+}
+
+/* Keyframe for the fade-in animation */
+@keyframes fadeInHighlight {
+  0% {
+    opacity: 0;  /* Start with the element being invisible */
+  }
+  50% {
+    opacity: 1;  /* Element becomes fully visible */
+  }
+  100% {
+    opacity: 1;  /* Fade out towards the end */
+    background-color: rgb(255, 255, 255);  /* Choose your highlight color */
+  }
+}
+
+/* Initial state for the element */
+.delete-animation {
+  animation: fadeOutDelete 1s ease-in-out;
+}
+
+/* Keyframe for the fade-out and shrink animation */
+@keyframes fadeOutDelete {
+  0% {
+    opacity: 1;  /* Start fully visible */
+  }
+  50% {
+    opacity: 1;  /* Start fully visible */
+    background-color: rgb(255, 183, 183);  /* Choose your highlight color */
+  }
+  100% {
+    opacity: 0;  /* Fully transparent */
+    background-color: rgb(255, 183, 183);  /* Choose your highlight color */
+  }
+}

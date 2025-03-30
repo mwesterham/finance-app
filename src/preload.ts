@@ -25,6 +25,7 @@ export interface WriteRowToDatabaseProps {
 }
 export interface OnWriteRowToDatabaseResult extends Result {
   data: any;
+  newTransactionId: number;
 }
 
 export interface DeleteRowFromDatabaseProps {
@@ -40,6 +41,8 @@ export interface WriteRowToDatabaseIfMissingProps {
 export interface OnWriteRowToDatabaseIfMissingResult extends Result {
   requestedRowCount: number;
   writtenRowCount: number;
+  oldLastTransactionId: number;
+  newLastTransactionId: number;
 }
 
 export interface GetDbLocalPathProps {

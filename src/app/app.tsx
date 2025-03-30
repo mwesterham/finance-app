@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import TransactionForm from "./components/TransactionForm";
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
 import MultiFileUploader, { InputFileLabel, LabeledFile } from "./components/MultiFileUploader";
@@ -34,7 +33,7 @@ const App = () => {
       fetchDatabaseRows(); // Refresh table after insertion
     });
     window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
-      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`,);
+      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates. oldid: ${result.oldLastTransactionId}. newid: ${result.newLastTransactionId}`,);
       fetchDatabaseRows();
     });
     window.electronAPI.onReadDatabaseRows((event, values: OnReadDatabaseRowsResult) => {
@@ -129,7 +128,7 @@ const App = () => {
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        {["tanstackTable", "pivotTable", "addTransaction", "multiFileUploader"].map((tab) => (
+        {["tanstackTable", "pivotTable", "multiFileUploader"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -138,11 +137,6 @@ const App = () => {
             {tab.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} {/* Format tab names */}
           </button>
         ))}
-      </div>
-
-      {/* Tab Content (keeps all in the DOM but hides inactive ones) */}
-      <div className={activeTab !== "addTransaction" ? "hidden" : ""}>
-        <TransactionForm formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
       </div>
 
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>

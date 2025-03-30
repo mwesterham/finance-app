@@ -1,4 +1,5 @@
 import { useState, ReactNode } from "react";
+import { cx } from "../util/util";
 
 interface ConfirmActionProps {
   onConfirm: () => void;
@@ -6,12 +7,14 @@ interface ConfirmActionProps {
   title?: string;
   body?: any;
   confirmText?: string;
+  confirmClassName?: string;
   cancelText?: string;
 }
 
 export default function ConfirmAction({
   onConfirm,
   children,
+  confirmClassName,
   title = "Are you sure?",
   body = <p className="text-gray-600 mt-2">This action cannot be undone.</p>,
   confirmText = "Confirm",
@@ -38,7 +41,7 @@ export default function ConfirmAction({
                 {cancelText}
               </button>
               <button 
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className={cx(confirmClassName ? confirmClassName : "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700")}
                 onClick={() => {
                   onConfirm();
                   setOpen(false);

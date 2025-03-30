@@ -15,13 +15,20 @@ import { filterFns } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../db/WesterhamDatabase';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
-import { MdDeleteForever } from "react-icons/md";
+import {
+  MdDeleteForever,
+  MdKeyboardDoubleArrowRight,
+  MdKeyboardDoubleArrowLeft,
+  MdKeyboardArrowRight,
+  MdKeyboardArrowLeft
+} from "react-icons/md";
+import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from './Filter';
 import ErrorBoundary from './ErrorBoundary';
 import { cx, formatAmount, getPossibleValuesFromCol } from '../util/util';
 import EditableInput from './EditableInput';
-import { OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
+import { OnDeleteRowFromDatabaseResult, OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
 import ConfirmAction from './ConfirmAction';
 import WithTooltip from './WithTooltip';
 import TransactionDetails from './TransactionDetails';
@@ -262,6 +269,8 @@ export interface TanstackDataTableProps {
 
 export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
   const [rowData, setRowData] = useState<FinanceSheetRow[]>(data);
+  const [highlightedRow, setHighlightedRows] = useState<number[]>([]);
+  const [deletedRows, setDeletedRows] = useState<number[]>([]);
   useEffect(() => {
     setRowData(data);
   }, [data]);
@@ -275,10 +284,22 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
   useEffect(() => {
     window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
       console.log("Database write result:", values);
-      fetchDatabaseRows(); // Refresh table after insertion
+      setHighlightedRows([values.newTransactionId]);
+
+      // Wait 2 seconds and then remove the highlight
+      setTimeout(() => {
+        setHighlightedRows([]);
+      }, 2000);
+
+      fetchDatabaseRows();
     });
     window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
       console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`,);
+      fetchDatabaseRows();
+    });
+    window.electronAPI.onDeleteRowFromDatabase((event, result: OnDeleteRowFromDatabaseResult) => {
+      console.log("Result of delete: " + result.data);
+      setDeletedRows([]);
       fetchDatabaseRows();
     });
   }, []);
@@ -288,10 +309,17 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
   };
 
   const deleteRow = async (transactionId: number) => {
-    // Implement deletion logic here
     console.log("Deleting transaction with ID:", transactionId);
-    await window.electronAPI.deleteRowFromDatabase({ transactionId });
-    fetchDatabaseRows();
+    setTimeout(async () => {
+      await window.electronAPI.deleteRowFromDatabase({ transactionId });
+    }, 1000);
+    setDeletedRows([transactionId])
+  };
+
+  const writeNewRow = async (row: FinanceSheetRow) => {
+    await window.electronAPI.writeRowToDatabase({
+      row,
+    });
   };
 
   const [columnVisibility, setColumnVisibility] = useState({
@@ -374,19 +402,41 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
         <tbody>
           {table.getRowModel().rows.map(row => (
             <ErrorBoundary key={`boundary-${row.id}`}>
-              <tr key={row.id} className="border-b">
+              <tr
+                key={row.id}
+                className={cx(
+                  "border-b",
+                  `${highlightedRow.includes(Number(row.original.transactionId)) ? 'highlightGreenEasy' : ''}`,
+                  `${deletedRows.includes(Number(row.original.transactionId)) ? 'delete-animation' : ''}`
+                )}
+              >
                 <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
-                  <WithTooltip text='Delete' position='top'>
-                    <ConfirmAction
-                      onConfirm={() => deleteRow(Number(row.original.transactionId))}
-                      title={`Delete transaction forever?`}
-                      body={<TransactionDetails transaction={row.original} />}
-                    >
-                      <MdDeleteForever
-                        className="text-red-500 cursor-pointer hover:text-red-700 min-w-5 min-h-5"
-                      />
-                    </ConfirmAction>
-                  </WithTooltip>
+                  <span className="flex flex-grow items-center justify-center space-x-2">
+                    <WithTooltip text='Delete' position='top'>
+                      <ConfirmAction
+                        onConfirm={() => deleteRow(Number(row.original.transactionId))}
+                        title={`Delete transaction forever?`}
+                        body={<TransactionDetails transaction={row.original} />}
+                      >
+                        <MdDeleteForever
+                          className="text-red-500 cursor-pointer hover:text-red-700 min-w-5 min-h-5"
+                        />
+                      </ConfirmAction>
+                    </WithTooltip>
+
+                    <WithTooltip text='Duplicate' position='top'>
+                      <ConfirmAction
+                        onConfirm={() => writeNewRow(row.original)}
+                        confirmClassName="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+                        title={`Duplicate this transaction?`}
+                        body={<TransactionDetails transaction={row.original} />}
+                      >
+                        <IoDuplicate
+                          className="text-blue-300 cursor-pointer hover:text-blue-700 min-w-3 min-h-3"
+                        />
+                      </ConfirmAction>
+                    </WithTooltip>
+                  </span>
                 </td>
                 {row.getVisibleCells().map(cell => (
                   <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
@@ -400,10 +450,31 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
       </table>
       <div className="flex items-center justify-between mt-4">
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}> {'<<'} </button>
-          <button className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}> {'<'} </button>
-          <button className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}> {'>'} </button>
-          <button className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}> {'>>'} </button>
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}
+          >
+            <MdKeyboardDoubleArrowLeft />
+          </button>
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}
+          >
+            <MdKeyboardArrowLeft />
+          </button>
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}
+          >
+            <MdKeyboardArrowRight />
+          </button>
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            <MdKeyboardDoubleArrowRight />
+          </button>
         </div>
         <span className="text-sm">Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
         <select className="border rounded px-2 py-1" value={table.getState().pagination.pageSize} onChange={e => table.setPageSize(Number(e.target.value))}>

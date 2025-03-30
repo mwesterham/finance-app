@@ -64,25 +64,25 @@ export class WesterhamDatabase {
     });
   }
 
-  public insertIntoTable(table: string, columns: string[], values: any[]) {
+  public async insertIntoTable(table: string, columns: string[], values: any[]) {
     const placeholders = values.map(() => '?').join(', ');
     const query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`;
 
-    this.db.run(query, values, (err) => {
+    await this.db.run(query, values, (err) => {
       if (err) {
         console.error(`Error inserting into ${table}:`, err);
       } else {
-        console.error(`Successfully inserted into ${table}. Data{ col: ${columns}; val: ${values}}`);
+        console.log(`Successfully inserted into ${table}. Data{ col: ${columns}; val: ${values}}`);
       }
     });
   }
 
-  public insertFinanceSheetRow(row: FinanceSheetRow) {
+  public async insertFinanceSheetRow(row: FinanceSheetRow) {
     const query = `INSERT INTO ${this.FINANCE_TABLE_NAME} (epoch, amount, transaction_info, source, category, provided_detail) 
                    VALUES (?, ?, ?, ?, ?, ?)`;
     const values = [row.epoch, row.amount, row.transactionInfo, row.source, row.category || null, row.providedDetail || null];
 
-    this.db.run(query, values, (err) => {
+    await this.db.run(query, values, (err) => {
       if (err) {
         console.error("Error inserting FinanceSheetRow:", err);
       } else {
@@ -156,6 +156,21 @@ export class WesterhamDatabase {
         } else {
           resolve();
           console.log(`Successfully updated row with transaction_id = ${transactionId}`);
+        }
+      });
+    });
+  }
+
+  public getLastTransactionId(): Promise<number | null> {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT MAX(transaction_id) AS lastTransactionId FROM ${this.FINANCE_TABLE_NAME}`;
+      
+      this.db.get<{ lastTransactionId: number }>(query, [], (err, row) => {
+        if (err) {
+          reject("Error fetching last transaction_id: " + err);
+        } else {
+          resolve(row?.lastTransactionId ?? null); // Return the last transaction_id or null if not found
+          console.log(`Successfully fetched last transaction_id: ${row?.lastTransactionId}`);
         }
       });
     });

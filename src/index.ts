@@ -57,11 +57,13 @@ ipcMain.on('readDatabaseRows', async (event, props: ReadDatabaseRowsProps) => {
   event.reply('readDatabaseRowsResult', response);
 });
 ipcMain.on('writeRowToDatabase', async (event, props: WriteRowToDatabaseProps) => {
-
-  db.insertFinanceSheetRow(props.row);
+  const originalLastId = await db.getLastTransactionId();
+  await db.insertFinanceSheetRow(props.row);
+  const newLastId = await db.getLastTransactionId();
 
   const response: OnWriteRowToDatabaseResult = {
-    data: props.row
+    data: props.row,
+    newTransactionId: newLastId
   };
 
   event.reply('writeRowToDatabaseResult', response);
@@ -77,6 +79,7 @@ ipcMain.on('deleteRowFromDatabase', async (event, props: DeleteRowFromDatabasePr
   event.reply('deleteRowFromDatabaseResult', response);
 });
 ipcMain.on('writeRowToDatabaseIfMissing', async (event, props: WriteRowToDatabaseIfMissingProps) => {
+  const originalLastId = await db.getLastTransactionId();
   const duplicateMap: Record<string, boolean> = {}; // To store duplicates
   const nonExistingRows: FinanceSheetRow[] = [];
 
@@ -90,11 +93,22 @@ ipcMain.on('writeRowToDatabaseIfMissing', async (event, props: WriteRowToDatabas
   }
 
   // Insert only the non-existing rows
-  nonExistingRows.forEach(row => db.insertFinanceSheetRow(row));
+  const insertPromises = nonExistingRows.map(row => {
+    return new Promise<void>(async (resolve, reject) => {
+      await db.insertFinanceSheetRow(row);
+      resolve();
+    });
+  });
+
+  await Promise.all(insertPromises);
+  
+  const newLastId = await db.getLastTransactionId();
 
   const response: OnWriteRowToDatabaseIfMissingResult = {
     requestedRowCount: props.rows.length,
     writtenRowCount: nonExistingRows.length,
+    oldLastTransactionId: originalLastId,
+    newLastTransactionId: newLastId,
   };
 
   event.reply('writeRowToDatabaseIfMissingResult', response);
