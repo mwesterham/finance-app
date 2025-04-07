@@ -35,8 +35,10 @@ export const getPossibleValuesFromCol = (column: Column<any>) => {
 }
 
 export const formatAmount = (amount: number) => {
-  if (amount < 0) {
-    return `($${Math.abs(amount).toFixed(2)})`;  // Display negative in parentheses
-  }
-  return `$${amount.toFixed(2)}`;
+  const formattedNumber = Math.abs(amount).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return amount < 0 ? `($${formattedNumber})` : `$${formattedNumber}`;
 };

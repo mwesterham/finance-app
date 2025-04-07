@@ -16,3 +16,7 @@ export const epochToDateStr = (epoch: number): string => {
 
   return `${year}-${month}-${day}`;
 };
+
+export const getAbbreviatedMonth = (monthNumber: number): string => {
+  return new Date(2000, monthNumber, 1).toLocaleString('default', { month: 'short' });
+};

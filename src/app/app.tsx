@@ -9,6 +9,7 @@ import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser
 import MatthewCheckingSnapshotParser from "./util/parser/MatthewCheckingSnapshotParser";
 import { TanstackDataTable } from "./components/TanstackDatatable";
 import MatthewCreditSnapshotParser from "./util/parser/MatthewCreditSnapshotParser";
+import { TanstackExploreTable } from "./components/TanstackExploreTable";
 
 const App = () => {
   const checkingParser = new CheckingParser();
@@ -27,7 +28,7 @@ const App = () => {
     category: undefined,
     providedDetail: "",
   });
-  const [activeTab, setActiveTab] = useState<string>("tanstackTable");
+  const [activeTab, setActiveTab] = useState<string>("pivotTable");
 
   useEffect(() => {
     window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
@@ -130,7 +131,7 @@ const App = () => {
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        {["tanstackTable", "pivotTable", "multiFileUploader"].map((tab) => (
+        {["pivotTable", "tanstackTable", "multiFileUploader"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -142,7 +143,7 @@ const App = () => {
       </div>
 
       <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
-        Nothing yet!
+        <TanstackExploreTable data={rows}/>
       </div>
 
       <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>
