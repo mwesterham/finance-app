@@ -13,7 +13,7 @@ import {
 import { getFacetedUniqueValues, GroupingState, Row } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../db/WesterhamDatabase';
 import { useEffect, useRef, useState } from 'react';
-import { cx, formatAmount, prettyPrintColumnName } from '../util/util';
+import { cx, formatAmount, prettyPrintString } from '../util/util';
 import { getAbbreviatedMonth } from '../util/time';
 import DraggableList, { ItemType } from './DraggableList';
 import { MdFilterList, MdOutlinePivotTableChart } from "react-icons/md";
@@ -38,8 +38,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -50,8 +50,8 @@ const columns = [
 
       return <>{getAbbreviatedMonth(initialValue)}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -62,20 +62,20 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('transactionId', {
     cell: info => info.getValue(),
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('amount', {
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     cell: ({ getValue, row, column, table }) => {
       const initialValue = getValue();
 
@@ -112,8 +112,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -123,8 +123,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -134,8 +134,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     filterFn: multiSelectFilter,
     aggregationFn: undefined,
   }),
@@ -145,8 +145,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -307,7 +307,7 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
               <div className="p-1 justify-between text-center min-w-24 relative">
                 <div className="flex flex-row bg-blue-500 text-white rounded-lg cursor-grab shadow-md">
                   <div {...listeners} className="flex flex-grow p-1 pl-4">
-                    {prettyPrintColumnName(item.text)}
+                    {prettyPrintString(item.text)}
                   </div>
                   {!isGrouped && (
                     <>

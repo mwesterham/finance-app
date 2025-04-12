@@ -9,7 +9,7 @@ export const formatVenmoNumber = (str: string): number => {
   return val < 0 ? 0 : val;
 };
 
-export const prettyPrintColumnName = (str: string): string => {
+export const prettyPrintString = (str: string): string => {
   return str
     .replace(/([A-Z])/g, ' $1')         // insert space before capital letters
     .replace(/^./, c => c.toUpperCase()) // capitalize the first character

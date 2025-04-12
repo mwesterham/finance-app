@@ -26,7 +26,7 @@ import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from './Filter';
 import ErrorBoundary from './ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintColumnName } from '../util/util';
+import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
 import EditableInput from './EditableInput';
 import { OnDeleteRowFromDatabaseResult, OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
 import ConfirmAction from './ConfirmAction';
@@ -84,21 +84,21 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'daterange',
     },
   }),
   columnHelper.accessor('transactionId', {
     cell: info => info.getValue(),
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'select',
     },
   }),
   columnHelper.accessor('amount', {
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     cell: ({ getValue, row, column, table }) => {
       const initialValue = getValue();
       const [value, setValue] = useState(initialValue);
@@ -125,7 +125,7 @@ const columns = [
         />
       </>;
     },
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'range',
     },
@@ -156,8 +156,8 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'select',
     },
@@ -187,8 +187,8 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'search',
     },
@@ -219,8 +219,8 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     filterFn: (row, columnId, filterValue, addMeta) => {
       if (filterValue === "only_null") {
         return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
@@ -256,8 +256,8 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'search',
     },
