@@ -55,21 +55,23 @@ const DroppableContainer = ({ id, items, children }: { id: string; items: ItemTy
   );
 };
 
-const ListSortableContext = ({items, id, title, render}: {items: ItemType[], id: string, title: string, render: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode}) => {
+const ListSortableContext = ({ items, id, title, render }: { items: ItemType[], id: string, title: string, render: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode }) => {
   return <>
-    
+
     <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
       <DroppableContainer id={id} items={items}>
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <div className="flex flex-row justify-center">
-          <div className="flex flex-col justify-center">
-            {items.map((item) => {
-              return <>
-                <div className="">
-                  <SortableItem key={item.id} item={item} render={render}/>
-                </div>
-              </>
-            })}
+        <div className="p-4">
+          <div className="flex items-center justify-center text-xl font-semibold mb-4">{title}</div>
+          <div className="flex flex-row justify-center">
+            <div className="flex flex-col justify-center">
+              {items.map((item) => {
+                return <>
+                  <div className="">
+                    <SortableItem key={item.id} item={item} render={render} />
+                  </div>
+                </>
+              })}
+            </div>
           </div>
         </div>
       </DroppableContainer>
@@ -84,7 +86,7 @@ interface DraggableListProps {
   renderItem: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode;
 }
 
-const DraggableList = (props : DraggableListProps) => {
+const DraggableList = (props: DraggableListProps) => {
   const [selectedItems, setSelectedItems] = useState<ItemType[]>(props.selectedItems);
   const [availableItems, setAvailableItems] = useState<ItemType[]>(props.availableItems);
 
@@ -99,7 +101,7 @@ const DraggableList = (props : DraggableListProps) => {
     const overList = over.id === selectedContainerId ? "selected" :
       over.id === availableContainerId ? "available" : activeList;
 
-      let newSelectedItems = selectedItems, newAvailableItems = availableItems;
+    let newSelectedItems = selectedItems, newAvailableItems = availableItems;
 
     if (activeList === overList) {
       const items = activeList === "selected" ? selectedItems : availableItems;
@@ -110,7 +112,7 @@ const DraggableList = (props : DraggableListProps) => {
       const reordered = arrayMove(items, oldIndex, newIndex);
       setItems(reordered);
 
-      
+
       if (activeList === "selected") {
         props.onDragEndCallback(reordered, availableItems);
       } else {
@@ -131,7 +133,7 @@ const DraggableList = (props : DraggableListProps) => {
         }
       }
 
-      
+
       setSelectedItems(newSelectedItems);
       setAvailableItems(newAvailableItems);
       // callback
@@ -142,8 +144,8 @@ const DraggableList = (props : DraggableListProps) => {
   return (
     <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
       <div className="flex p-6">
-        <ListSortableContext items={selectedItems} id={selectedContainerId} title={"Selected Items"} render={props.renderItem}/>
-        <ListSortableContext items={availableItems} id={availableContainerId} title={"Available Items"} render={props.renderItem}/>
+        <ListSortableContext items={selectedItems} id={selectedContainerId} title={"Pivot Columns"} render={props.renderItem} />
+        <ListSortableContext items={availableItems} id={availableContainerId} title={"Display Columns"} render={props.renderItem} />
       </div>
     </DndContext>
   );
