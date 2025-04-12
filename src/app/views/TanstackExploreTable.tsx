@@ -15,7 +15,7 @@ import { FinanceSheetRow } from '../../db/WesterhamDatabase';
 import { useEffect, useRef, useState } from 'react';
 import { cx, formatAmount, prettyPrintString } from '../util/util';
 import { getAbbreviatedMonth } from '../util/time';
-import DraggableList, { ItemType } from './DraggableList';
+import DraggableList, { ItemType } from '../components/DraggableList';
 import { MdFilterList, MdOutlinePivotTableChart } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";

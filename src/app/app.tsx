@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { OnGetDbLocalPathResult, OnReadDatabaseRowsResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from "../preload";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
-import MultiFileUploader, { InputFileLabel, LabeledFile } from "./components/MultiFileUploader";
+import MultiFileUploader, { InputFileLabel, LabeledFile } from "./views/MultiFileUploader";
 import CheckingParser from "./util/parser/CheckingParser";
 import CreditParser from "./util/parser/CreditParser";
 import VenmoParser from "./util/parser/VenmoParser";
 import MatthewVenmoSnapshotParser from "./util/parser/MatthewVenmoSnapshotParser";
 import MatthewCheckingSnapshotParser from "./util/parser/MatthewCheckingSnapshotParser";
-import { TanstackDataTable } from "./components/TanstackDatatable";
+import { TanstackDataTable } from "./views/TanstackDatatable";
 import MatthewCreditSnapshotParser from "./util/parser/MatthewCreditSnapshotParser";
-import { TanstackExploreTable } from "./components/TanstackExploreTable";
+import { TanstackExploreTable } from "./views/TanstackExploreTable";
 import { prettyPrintString } from "./util/util";
 
 const App = () => {

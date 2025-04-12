@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../components/MultiFileUploader";
+import { InputFileLabel } from "../../views/MultiFileUploader";
 
 export interface CreditInputRow {
   date: Date;

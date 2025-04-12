@@ -24,14 +24,14 @@ import {
 } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
-import Filter from './Filter';
-import ErrorBoundary from './ErrorBoundary';
+import Filter from '../components/Filter';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
-import EditableInput from './EditableInput';
+import EditableInput from '../components/EditableInput';
 import { OnDeleteRowFromDatabaseResult, OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
-import ConfirmAction from './ConfirmAction';
-import WithTooltip from './WithTooltip';
-import TransactionDetails from './TransactionDetails';
+import ConfirmAction from '../components/ConfirmAction';
+import WithTooltip from '../components/WithTooltip';
+import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
 
 
