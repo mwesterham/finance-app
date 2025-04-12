@@ -28,21 +28,10 @@ const App = () => {
         ))}
       </div>
 
-      <div className={activeTab !== "pivotTable" ? "hidden" : ""}>
-        <TanstackExploreTable />
-      </div>
-
-      <div className={activeTab !== "multiFileUploader" ? "hidden" : ""}>
-        <MultiFileUploader />
-      </div>
-
-      <div className={activeTab !== "fillTable" ? "hidden" : ""}>
-        New View
-      </div>
-
-      <div className={activeTab !== "tanstackTable" ? "hidden" : ""}>
-        <TanstackDataTable />
-      </div>
+      {activeTab === "pivotTable" && <TanstackExploreTable />}
+      {activeTab === "multiFileUploader" && <MultiFileUploader />}
+      {activeTab === "fillTable" && <>hi</>}
+      {activeTab === "tanstackTable" && <TanstackDataTable />}
     </div>
   );
 };
