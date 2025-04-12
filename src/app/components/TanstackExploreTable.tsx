@@ -10,17 +10,23 @@ import {
   getGroupedRowModel,
   getExpandedRowModel
 } from '@tanstack/react-table';
-import { filterFns, GroupingState } from "@tanstack/table-core";
+import { filterFns, getFacetedUniqueValues, GroupingState, Row } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../db/WesterhamDatabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { cx, formatAmount } from '../util/util';
 import { customFormatDate, epochToDateStr, getAbbreviatedMonth } from '../util/time';
 import DraggableList, { ItemType } from './DraggableList';
 import { MdOutlinePivotTableChart } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
+import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
 
-
+const multiSelectFilter = (row: Row<FinanceSheetRow>, columnId: string, filterValue: string[]) => {
+  if (!filterValue?.length) return false; // Show none if no filters
+  const stringFilters = filterValue.map(e => String(e));
+  const value = row.getValue(columnId);
+  return stringFilters.includes(String(value));
+};
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
 
@@ -34,7 +40,8 @@ const columns = [
     },
     header: () => <span>Year</span>,
     footer: info => info.column.id,
-    aggregationFn: 'count',
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor(row => new Date(row.epoch).getMonth(), {
     id: 'month',
@@ -45,7 +52,8 @@ const columns = [
     },
     header: () => <span>Month</span>,
     footer: info => info.column.id,
-    aggregationFn: 'count',
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor(row => new Date(row.epoch).getDate(), {
     id: 'day',
@@ -56,10 +64,15 @@ const columns = [
     },
     header: () => <span>Day</span>,
     footer: info => info.column.id,
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('transactionId', {
     cell: info => info.getValue(),
+    header: () => <span>Transaction Id</span>,
     footer: info => info.column.id,
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('amount', {
     header: () => 'Amount',
@@ -78,10 +91,20 @@ const columns = [
       return <div className={initialValue < 0 ? "text-red-500" : ""}>{amt}</div>;
     },
     footer: ({ table }) => {
+      const rows = table.getGroupedRowModel().rows;
       const total = table.getFilteredRowModel().rows.reduce((sum, row) => sum + Number(row.getValue('amount')), 0);
-      return `Total: ${formatAmount(total)}`;
+      const avg = rows.length > 0 ? total / rows.length : 0;
+      return <>
+        <div>
+          {`Total: ${formatAmount(total)}`}
+        </div>
+        <div>
+          {`Average: ${formatAmount(avg)}`}
+        </div>
+      </>;
     },
     aggregationFn: 'sum',
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('source', {
     cell: ({ getValue, row, column, table }) => {
@@ -91,6 +114,8 @@ const columns = [
     },
     header: 'Source',
     footer: info => info.column.id,
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('transactionInfo', {
     cell: ({ getValue, row, column, table }) => {
@@ -100,6 +125,8 @@ const columns = [
     },
     header: 'Transaction Info',
     footer: info => info.column.id,
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('category', {
     cell: ({ getValue, row, column, table }) => {
@@ -109,12 +136,8 @@ const columns = [
     },
     header: 'Category',
     footer: info => info.column.id,
-    filterFn: (row, columnId, filterValue, addMeta) => {
-      if (filterValue === "only_null") {
-        return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
-      }
-      return filterFns.includesString(row, columnId, filterValue, addMeta); // Return all rows if filter is not active
-    },
+    filterFn: multiSelectFilter,
+    aggregationFn: undefined,
   }),
   columnHelper.accessor('providedDetail', {
     cell: ({ getValue, row, column, table }) => {
@@ -124,7 +147,25 @@ const columns = [
     },
     header: 'Provided Detail',
     footer: info => info.column.id,
+    aggregationFn: undefined,
+    filterFn: multiSelectFilter,
   }),
+];
+
+// this also decides the initial ordering
+const defaultPivotedKeys = [
+  'year', 
+  'month', 
+  'category',
+];
+const orderedTableCols: string[] = [
+  ...defaultPivotedKeys,
+  'amount',
+  'providedDetail',
+  'day',
+  'transactionId',
+  'source',
+  'transactionInfo',
 ];
 
 export interface TanstackExploreTableProps {
@@ -135,12 +176,19 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
   const [rowData, setRowData] = useState<FinanceSheetRow[]>(data);
   useEffect(() => {
     setRowData(data);
+    table.setColumnOrder(orderedTableCols);
   }, [data]);
 
-  const [columnVisibility, setColumnVisibility] = useState({
-    transactionId: false,
+  const [columnVisibility, setColumnVisibility] = useState<{[key: string]: boolean}>({
+    year: true,
+    month: true,
     day: false,
+    amount: true,
+    transactionId: false,
     source: false,
+    transactionInfo: false,
+    category: true,
+    providedDetail: true,
   });
   const [sorting, setSorting] = useState([
     { id: "year", desc: true },
@@ -151,17 +199,53 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   );
-  const [grouping, setGrouping] = useState<GroupingState>(['year', 'month', 'category']);
 
-  const initialItems: ItemType[] = grouping.map((item, idx) => {
+  const [filterDropdownCol, setFilterDropdownCol] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setFilterDropdownCol(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleVisibility = (col: string, override?: boolean) => {
+    const originalColVisibility = columnVisibility[col];
+    const newColVis = !originalColVisibility;
+    columnVisibility[col] = override != undefined ? override : newColVis;
+    setColumnVisibility({
+      ...columnVisibility
+    });
+  }
+  
+  const allItems: ItemType[] = orderedTableCols.map((item, idx) => {
     return {
       id: idx,
       text: item,
     }
   });
+  
+  const [grouping, setGrouping] = useState<GroupingState>([...defaultPivotedKeys]);
+  const initialSelectedItems = allItems.filter(i => defaultPivotedKeys.includes(i.text));
+  const initialAvailableItems = allItems.filter(i => !defaultPivotedKeys.includes(i.text));
 
   const onDragEndCallback = (selectedItems: ItemType[], availableItems: ItemType[]) => {
-    setGrouping(selectedItems.map(i => i.text));
+    const newColumnOrder = [...selectedItems, ...availableItems].map(i => i.text);
+    const newGrouping = selectedItems.map(i => i.text);
+    setGrouping(newGrouping);
+    newGrouping.forEach(col => toggleVisibility(col, true))
+    table.setColumnOrder(newColumnOrder);
+  }
+
+  const onColToggleCallback = (col: string) => {
+    if (!grouping.includes(col)) {
+      toggleVisibility(col);
+    }
   }
 
   const table = useReactTable({
@@ -174,22 +258,97 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     onGroupingChange: setGrouping,
   });
 
   return (
-    <div className="flex flex-row justify-center">
-      <DraggableList selectedItems={initialItems} availableItems={[]} onDragEndCallback={onDragEndCallback} renderItem={
-        (item) => (
-          <div className="p-1 justify-between text-center min-w-24">
-            <div className="p-1 bg-blue-500 text-white rounded-lg cursor-grab shadow-md">
-              {item.text}
+    <div className="flex flex-col justify-center">
+      <DraggableList selectedItems={initialSelectedItems} availableItems={initialAvailableItems} onDragEndCallback={onDragEndCallback}
+        renderItem={(item, listeners) => {
+          const colId = item.text;
+          const isGrouped = grouping.includes(colId);
+          const valuesMap = table.getColumn(colId)?.getFacetedUniqueValues();
+          const allValues: string[] = [];
+
+          if (valuesMap) {
+            for (const [val] of valuesMap.entries()) {
+              const value = val === null || val === undefined ? null : val;
+              allValues.push(value);
+            }
+          }
+          const activeFilterValues =
+            (table.getColumn(colId)?.getFilterValue() as string[] | undefined) ?? allValues;
+      
+          const toggleFilterValue = (value: string) => {
+            const current = new Set(activeFilterValues);
+            if (current.has(value)) {
+              current.delete(value);
+            } else {
+              current.add(value);
+            }
+            table.getColumn(colId)?.setFilterValue(Array.from(current));
+          };
+      
+          const selectAll = () => {
+            if (valuesMap) {
+              table.getColumn(colId)?.setFilterValue(Array.from(valuesMap.keys()));
+            }
+          };
+      
+          const unselectAll = () => {
+            table.getColumn(colId)?.setFilterValue([]);
+          };
+      
+          return (
+            <div className="p-1 justify-between text-center min-w-24 relative">
+              <div className="flex flex-row bg-blue-500 text-white rounded-lg cursor-grab shadow-md">
+                <div {...listeners} className="flex flex-grow p-1">
+                  {item.text}
+                </div>
+                {!isGrouped && (
+                  <>
+                    <button className="p-1" onClick={() => onColToggleCallback(colId)}>
+                      {columnVisibility[colId] === false ? <FaRegCircle /> : <FaRegDotCircle />}
+                    </button>
+                  </>
+                )}
+                
+                <button className="p-1" onClick={() => setFilterDropdownCol(filterDropdownCol === colId ? null : colId)}>
+                  🔽
+                </button>
+              </div>
+      
+              {filterDropdownCol === colId && (
+                <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border w-48 max-h-64 overflow-auto">
+                  <div className="flex justify-between gap-2 mb-2 text-sm">
+                    <button onClick={selectAll} className="text-blue-600 hover:underline">Select All</button>
+                    <button onClick={unselectAll} className="text-red-600 hover:underline">Unselect All</button>
+                  </div>
+                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto text-sm">
+                    {valuesMap &&
+                      Array.from(valuesMap.entries())
+                        .sort()
+                        .map(([val, count]) => (
+                          <label key={val} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={activeFilterValues?.includes(val as string)}
+                              onChange={() => toggleFilterValue(val as string)}
+                            />
+                            <span>{colId == "month" ? getAbbreviatedMonth(val) : String(val)} <span className="text-gray-400 text-xs">({count})</span></span>
+                          </label>
+                        ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )
-      } />
+          );
+        }}
+      />
+      {/** End of draggable list */}
       <div className="">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>

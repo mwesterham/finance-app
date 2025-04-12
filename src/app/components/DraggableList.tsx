@@ -15,13 +15,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cx } from "../util/util";
+import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export interface ItemType {
   id: number;
   text: string;
 };
 
-const SortableItem = ({ item, render }: { item: ItemType, render: (item: ItemType) => ReactNode }) => {
+const SortableItem = ({ item, render }: { item: ItemType, render: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
 
   const style = {
@@ -34,9 +35,8 @@ const SortableItem = ({ item, render }: { item: ItemType, render: (item: ItemTyp
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
     >
-      {render(item)}
+      {render(item, listeners)}
     </div>
   );
 };
@@ -55,7 +55,7 @@ const DroppableContainer = ({ id, items, children }: { id: string; items: ItemTy
   );
 };
 
-const ListSortableContext = ({items, id, title, render}: {items: ItemType[], id: string, title: string, render: (item: ItemType) => ReactNode}) => {
+const ListSortableContext = ({items, id, title, render}: {items: ItemType[], id: string, title: string, render: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode}) => {
   return <>
     
     <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
@@ -81,7 +81,7 @@ interface DraggableListProps {
   selectedItems: ItemType[];
   availableItems: ItemType[];
   onDragEndCallback: (selectedItems: ItemType[], availableItems: ItemType[]) => void;
-  renderItem: (item: ItemType) => ReactNode;
+  renderItem: (item: ItemType, listeners: SyntheticListenerMap) => ReactNode;
 }
 
 const DraggableList = (props : DraggableListProps) => {
@@ -142,8 +142,8 @@ const DraggableList = (props : DraggableListProps) => {
   return (
     <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
       <div className="flex p-6">
-        <ListSortableContext items={availableItems} id={availableContainerId} title={"Available Items"} render={props.renderItem}/>
         <ListSortableContext items={selectedItems} id={selectedContainerId} title={"Selected Items"} render={props.renderItem}/>
+        <ListSortableContext items={availableItems} id={availableContainerId} title={"Available Items"} render={props.renderItem}/>
       </div>
     </DndContext>
   );
