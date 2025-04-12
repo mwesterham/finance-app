@@ -32,7 +32,8 @@ export interface DeleteRowFromDatabaseProps {
   transactionId: number;
 }
 export interface OnDeleteRowFromDatabaseResult extends Result {
-  data: any;
+  deletedId: number;
+  deleted: boolean;
 }
 
 export interface WriteRowToDatabaseIfMissingProps {
@@ -62,27 +63,39 @@ export interface OnUpdateRowInDatabaseResult extends Result {
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
-    ipcRenderer.on('readDatabaseRowsResult', (event, result) => callback(event, result)),
+    ipcRenderer.on('readDatabaseRowsResult', callback),
+  detachOnReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
+    ipcRenderer.removeListener('readDatabaseRowsResult', callback),
 
   writeRowToDatabase: async (props: WriteRowToDatabaseProps) => ipcRenderer.send('writeRowToDatabase', props),
   onWriteRowToDatabase: (callback: (event: any, values: OnWriteRowToDatabaseResult) => void) => 
-    ipcRenderer.on('writeRowToDatabaseResult', (event, result) => callback(event, result)),
+    ipcRenderer.on('writeRowToDatabaseResult', callback),
+  detachOnWriteRowToDatabase: (callback: (event: any, values: OnWriteRowToDatabaseResult) => void) => 
+    ipcRenderer.removeListener('writeRowToDatabaseResult', callback),
 
   deleteRowFromDatabase: async (props: DeleteRowFromDatabaseProps) => ipcRenderer.send('deleteRowFromDatabase', props),
   onDeleteRowFromDatabase: (callback: (event: any, values: OnDeleteRowFromDatabaseResult) => void) => 
-    ipcRenderer.on('deleteRowFromDatabaseResult', (event, result) => callback(event, result)),
+    ipcRenderer.on('deleteRowFromDatabaseResult', callback),
+  detachOnDeleteRowFromDatabase: (callback: (event: any, values: OnDeleteRowFromDatabaseResult) => void) => 
+    ipcRenderer.removeListener('deleteRowFromDatabaseResult', callback),
 
   writeRowToDatabaseIfMissing: async (props?: WriteRowToDatabaseIfMissingProps) => ipcRenderer.send('writeRowToDatabaseIfMissing', props),
   onWriteRowToDatabaseIfMissing: (callback: (event: any, values: OnWriteRowToDatabaseIfMissingResult) => void) => 
-    ipcRenderer.on('writeRowToDatabaseIfMissingResult', (event, result) => callback(event, result)),
+    ipcRenderer.on('writeRowToDatabaseIfMissingResult', callback),
+  detachOnWriteRowToDatabaseIfMissing: (callback: (event: any, values: OnWriteRowToDatabaseIfMissingResult) => void) => 
+    ipcRenderer.removeListener('writeRowToDatabaseIfMissingResult', callback),
 
   getDbLocalPath: async (props?: GetDbLocalPathProps) => ipcRenderer.send('getDbLocalPath', props),
   onGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 
-    ipcRenderer.on('getDbLocalPathResult', (event, result) => callback(event, result)),
+    ipcRenderer.on('getDbLocalPathResult', callback),
+  detachOnGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 
+    ipcRenderer.removeListener('getDbLocalPathResult', callback),
 
   updateRowInDatabase: async (props?: UpdateRowInDatabaseProps) => ipcRenderer.send('updateRowInDatabase', props),
   onUpdateRowInDatabase: (callback: (event: any, values: OnUpdateRowInDatabaseResult) => void) => 
-    ipcRenderer.on('onUpdateRowInDatabase', (event, result) => callback(event, result)),
+    ipcRenderer.on('onUpdateRowInDatabase', callback),
+  detachOnUpdateRowInDatabase: (callback: (event: any, values: OnUpdateRowInDatabaseResult) => void) => 
+    ipcRenderer.removeListener('onUpdateRowInDatabase', callback),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

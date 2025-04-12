@@ -24,9 +24,9 @@ const EditableInput = ({ value, type, suggestions, displayBody, onChange }: Edit
   };
 
   const handleSave = () => {
-    onChange(inputValue); // Commit the change
+    onChange(inputValue === "" ? undefined : inputValue); // Commit the change
     setIsEditing(false);
-    setInitialValue(inputValue); // Set new initial value
+    setInitialValue(inputValue === "" ? undefined : inputValue); // Set new initial value
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +39,8 @@ const EditableInput = ({ value, type, suggestions, displayBody, onChange }: Edit
         <div className="flex items-center w-full space-x-2">
           {suggestions && (
             <datalist id={"id"}>
-              {suggestions.map((value: any) => (
-                <option value={value} key={value} />
+              {suggestions.map((value: any, idx: number) => (
+                <option value={value} key={idx} />
               ))}
             </datalist>
           )}

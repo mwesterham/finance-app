@@ -73,7 +73,8 @@ ipcMain.on('deleteRowFromDatabase', async (event, props: DeleteRowFromDatabasePr
   await db.deleteFinanceSheetRow(props.transactionId);
 
   const response: OnDeleteRowFromDatabaseResult = {
-    data: `Deleted transactionId (${props.transactionId})`
+    deletedId: props.transactionId,
+    deleted: true,
   };
 
   event.reply('deleteRowFromDatabaseResult', response);

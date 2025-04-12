@@ -1,4 +1,11 @@
 import { useRef, useState } from "react";
+import CheckingParser from "../util/parser/CheckingParser";
+import CreditParser from "../util/parser/CreditParser";
+import VenmoParser from "../util/parser/VenmoParser";
+import MatthewCheckingSnapshotParser from "../util/parser/MatthewCheckingSnapshotParser";
+import MatthewCreditSnapshotParser from "../util/parser/MatthewCreditSnapshotParser";
+import MatthewVenmoSnapshotParser from "../util/parser/MatthewVenmoSnapshotParser";
+import DatabaseService from "../util/DatabaseService";
 
 export interface LabeledFile {
   file: File;
@@ -15,10 +22,16 @@ export enum InputFileLabel {
 }
 
 interface MultiFileUploaderProps {
-  onSubmit: (files: LabeledFile[]) => void;
 }
 
-export default function MultiFileUploader({ onSubmit }: MultiFileUploaderProps) {
+export default function MultiFileUploader(props: MultiFileUploaderProps) {
+  const checkingParser = new CheckingParser();
+  const creditParser = new CreditParser();
+  const venmoParser = new VenmoParser();
+  const matthewCheckingSnapshotParser = new MatthewCheckingSnapshotParser();
+  const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
+  const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
 
@@ -43,9 +56,59 @@ export default function MultiFileUploader({ onSubmit }: MultiFileUploaderProps) 
   const handleRemoveFile = (index: number) => {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
+  
+  const handleMultiFileSubmit = async (files: LabeledFile[]) => {
+    for (const { file, label } of files) {
+      const text = await file.text();
+      switch (label) {
+        case InputFileLabel.WELLS_FARGO_CHECKING: {
+          const rows = checkingParser.toFinanceRows(text);
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.WELLS_FARGO_CREDIT: {
+          const rows = creditParser.toFinanceRows(text);
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.VENMO: {
+          const rows = venmoParser.toFinanceRows(text);
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_VENMO: {
+          const rows = matthewVenmoSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.VENMO
+          });
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT: {
+          const rows = matthewCreditSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.WELLS_FARGO_CREDIT
+          });
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING: {
+          const rows = matthewCheckingSnapshotParser.toFinanceRows({ 
+            text: text, 
+            label: InputFileLabel.WELLS_FARGO_CHECKING
+          });
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
+        default: {
+          console.log(`Invalid label ${label}`)
+        }
+      }
+    };
+  };
 
   const handleSubmit = () => {
-    onSubmit(files);
+    handleMultiFileSubmit(files);
     setFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

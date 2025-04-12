@@ -20,6 +20,7 @@ import { MdFilterList, MdOutlinePivotTableChart } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
 import { IoFilterCircleOutline } from 'react-icons/io5';
+import DatabaseService from "../util/DatabaseService";
 
 const multiSelectFilter = (row: Row<FinanceSheetRow>, columnId: string, filterValue: string[]) => {
   if (!filterValue?.length) return false; // Show none if no filters
@@ -169,15 +170,17 @@ const orderedTableCols: string[] = [
 ];
 
 export interface TanstackExploreTableProps {
-  data: FinanceSheetRow[];
 }
 
-export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
-  const [rowData, setRowData] = useState<FinanceSheetRow[]>(data);
+export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
+  const [rowData, setRowData] = useState<FinanceSheetRow[]>([]);
+
   useEffect(() => {
-    setRowData(data);
-    table.setColumnOrder(orderedTableCols);
-  }, [data]);
+    DatabaseService.readDatabaseRows().then((values) => {
+      console.log("Database read result length:", values.rows.length);
+      setRowData(values.rows);
+    });
+  }, []);
 
   const [columnVisibility, setColumnVisibility] = useState<{ [key: string]: boolean }>({
     year: true,

@@ -28,11 +28,11 @@ import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
 import EditableInput from '../components/EditableInput';
-import { OnDeleteRowFromDatabaseResult, OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
 import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
+import DatabaseService from "../util/DatabaseService";
 
 
 declare module '@tanstack/react-table' {
@@ -48,10 +48,11 @@ declare module '@tanstack/react-table' {
 }
 
 const updateRow = async (transactionId: string, row: FinanceSheetRow) => {
-  await window.electronAPI.updateRowInDatabase({
+  const result = await DatabaseService.updateRowInDatabase({
     transactionId,
     row,
   });
+  console.log(result);
 };
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
@@ -65,6 +66,10 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to 1970-01-01.`);
+          val = "1970-01-01"
+        }
         const localDate = new Date(val + 'T00:00:00');
         const num = localDate.getTime();
         setValue(num);
@@ -105,6 +110,10 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to 0.`);
+          val = "0";
+        }
         const num = Number(val);
         setValue(num);
         table.options.meta?.updateData(row.index, column.id, num); // Update data on change
@@ -137,6 +146,10 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+          val = "";
+        }
         const str = String(val);
         setValue(str);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
@@ -169,6 +182,10 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+          val="";
+        }
         const str = String(val);
         setValue(str);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
@@ -200,12 +217,17 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        let isBlank = false;
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to undefined.`);
+          isBlank = true;
+        }
         const str = String(val);
         setValue(str);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
-          category: str
+          category: isBlank ? undefined : str
         });
       };
 
@@ -238,12 +260,17 @@ const columns = [
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
+        let isBlank = false;
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to null.`);
+          isBlank = true;
+        }
         const str = String(val);
         setValue(str);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
-          providedDetail: str
+          providedDetail: isBlank ? undefined : str
         });
       };
 
@@ -265,62 +292,48 @@ const columns = [
 ];
 
 export interface TanstackDataTableProps {
-  data: FinanceSheetRow[];
 }
 
-export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
-  const [rowData, setRowData] = useState<FinanceSheetRow[]>(data);
+export const TanstackDataTable = (props: TanstackDataTableProps) => {
+  const [rowData, setRowData] = useState<FinanceSheetRow[]>([]);
   const [highlightedRow, setHighlightedRows] = useState<number[]>([]);
   const [deletedRows, setDeletedRows] = useState<number[]>([]);
-  useEffect(() => {
-    setRowData(data);
-  }, [data]);
 
   useEffect(() => {
-    window.electronAPI.onUpdateRowInDatabase((event, values: OnUpdateRowInDatabaseResult) => {
-      console.log("Database update result:", values);
-    });
-  }, []);
-
-  useEffect(() => {
-    window.electronAPI.onWriteRowToDatabase((event, values: OnWriteRowToDatabaseResult) => {
-      console.log("Database write result:", values);
-      setHighlightedRows([values.newTransactionId]);
-
-      // Wait 2 seconds and then remove the highlight
-      setTimeout(() => {
-        setHighlightedRows([]);
-      }, 2000);
-
-      fetchDatabaseRows();
-    });
-    window.electronAPI.onWriteRowToDatabaseIfMissing((event, result: OnWriteRowToDatabaseIfMissingResult) => {
-      console.log(`Attempting to write ${result.requestedRowCount} rows, wrote ${result.writtenRowCount} rows. Found ${result.requestedRowCount - result.writtenRowCount} duplicates.`,);
-      fetchDatabaseRows();
-    });
-    window.electronAPI.onDeleteRowFromDatabase((event, result: OnDeleteRowFromDatabaseResult) => {
-      console.log("Result of delete: " + result.data);
-      setDeletedRows([]);
-      fetchDatabaseRows();
-    });
+    fetchDatabaseRows();
   }, []);
 
   const fetchDatabaseRows = async () => {
-    await window.electronAPI.readDatabaseRows();
+    DatabaseService.readDatabaseRows().then((values) => {
+      console.log("Database read result length:", values.rows.length);
+      setRowData(values.rows);
+    });
   };
 
   const deleteRow = async (transactionId: number) => {
     console.log("Deleting transaction with ID:", transactionId);
     setTimeout(async () => {
-      await window.electronAPI.deleteRowFromDatabase({ transactionId });
+      const result = await DatabaseService.deleteRowFromDatabase({ transactionId });
+      console.log(result);
+      setDeletedRows([]);
+      fetchDatabaseRows();
     }, 1000);
     setDeletedRows([transactionId])
   };
 
   const writeNewRow = async (row: FinanceSheetRow) => {
-    await window.electronAPI.writeRowToDatabase({
+    const values = await DatabaseService.writeRowToDatabase({
       row,
     });
+    console.log("Database write result:", values);
+    setHighlightedRows([values.newTransactionId]);
+
+    // Wait 2 seconds and then remove the highlight
+    setTimeout(() => {
+      setHighlightedRows([]);
+    }, 2000);
+
+    fetchDatabaseRows();
   };
 
   const [columnVisibility, setColumnVisibility] = useState({
@@ -334,8 +347,6 @@ export const TanstackDataTable = ({ data }: TanstackDataTableProps) => {
     []
   );
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
-
-  const rerender = useReducer(() => ({}), {})[1];
 
   const table = useReactTable({
     data: rowData,
