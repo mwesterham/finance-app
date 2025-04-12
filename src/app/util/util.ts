@@ -9,6 +9,14 @@ export const formatVenmoNumber = (str: string): number => {
   return val < 0 ? 0 : val;
 };
 
+export const prettyPrintColumnName = (str: string): string => {
+  return str
+    .replace(/([A-Z])/g, ' $1')         // insert space before capital letters
+    .replace(/^./, c => c.toUpperCase()) // capitalize the first character
+    .trim();                             // remove leading/trailing spaces
+};
+
+
 export const cleanDate = (str: string): Date => {
   // Check if the string matches the ISO 8601 format
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(str)) {

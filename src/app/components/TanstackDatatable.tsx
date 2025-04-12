@@ -26,7 +26,7 @@ import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from './Filter';
 import ErrorBoundary from './ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol } from '../util/util';
+import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintColumnName } from '../util/util';
 import EditableInput from './EditableInput';
 import { OnDeleteRowFromDatabaseResult, OnUpdateRowInDatabaseResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult } from '../../preload';
 import ConfirmAction from './ConfirmAction';
@@ -84,21 +84,21 @@ const columns = [
         />
       </>;
     },
-    header: () => <span>Date</span>,
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'daterange',
     },
   }),
   columnHelper.accessor('transactionId', {
     cell: info => info.getValue(),
-    footer: info => info.column.id,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'select',
     },
   }),
   columnHelper.accessor('amount', {
-    header: () => 'Amount',
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     cell: ({ getValue, row, column, table }) => {
       const initialValue = getValue();
       const [value, setValue] = useState(initialValue);
@@ -125,7 +125,7 @@ const columns = [
         />
       </>;
     },
-    footer: info => info.column.id,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'range',
     },
@@ -156,8 +156,8 @@ const columns = [
         />
       </>;
     },
-    header: 'Source',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'select',
     },
@@ -187,8 +187,8 @@ const columns = [
         />
       </>;
     },
-    header: 'Transaction Info',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'search',
     },
@@ -219,8 +219,8 @@ const columns = [
         />
       </>;
     },
-    header: 'Category',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     filterFn: (row, columnId, filterValue, addMeta) => {
       if (filterValue === "only_null") {
         return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
@@ -256,8 +256,8 @@ const columns = [
         />
       </>;
     },
-    header: 'Provided Detail',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     meta: {
       filterVariant: 'search',
     },

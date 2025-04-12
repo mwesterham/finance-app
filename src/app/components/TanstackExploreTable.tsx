@@ -14,12 +14,16 @@ import { filterFns, getFacetedUniqueValues, GroupingState, Row } from "@tanstack
 import { FinanceSheetRow } from '../../db/WesterhamDatabase';
 import { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from './ErrorBoundary';
-import { cx, formatAmount } from '../util/util';
+import { cx, formatAmount, prettyPrintColumnName } from '../util/util';
 import { customFormatDate, epochToDateStr, getAbbreviatedMonth } from '../util/time';
 import DraggableList, { ItemType } from './DraggableList';
-import { MdOutlinePivotTableChart } from "react-icons/md";
-import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
+import { MdArrowDropDownCircle, MdFilterList, MdOutlinePivotTableChart } from "react-icons/md";
+import { IoIosArrowDropdown, IoIosArrowDropdownCircle, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
+import { TbFilterEdit } from "react-icons/tb";
+import { CiFilter } from "react-icons/ci";
+
 import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
+import { IoFilterCircle, IoFilterCircleOutline } from 'react-icons/io5';
 
 const multiSelectFilter = (row: Row<FinanceSheetRow>, columnId: string, filterValue: string[]) => {
   if (!filterValue?.length) return false; // Show none if no filters
@@ -38,8 +42,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: () => <span>Year</span>,
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -50,8 +54,8 @@ const columns = [
 
       return <>{getAbbreviatedMonth(initialValue)}</>;
     },
-    header: () => <span>Month</span>,
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -62,20 +66,20 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: () => <span>Day</span>,
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('transactionId', {
     cell: info => info.getValue(),
-    header: () => <span>Transaction Id</span>,
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
   columnHelper.accessor('amount', {
-    header: () => 'Amount',
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     cell: ({ getValue, row, column, table }) => {
       const initialValue = getValue();
 
@@ -112,8 +116,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: 'Source',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -123,8 +127,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: 'Transaction Info',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -134,8 +138,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: 'Category',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     filterFn: multiSelectFilter,
     aggregationFn: undefined,
   }),
@@ -145,8 +149,8 @@ const columns = [
 
       return <>{initialValue}</>;
     },
-    header: 'Provided Detail',
-    footer: info => info.column.id,
+    header: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintColumnName(column.id)}</span>,
     aggregationFn: undefined,
     filterFn: multiSelectFilter,
   }),
@@ -305,8 +309,8 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
           return (
             <div className="p-1 justify-between text-center min-w-24 relative">
               <div className="flex flex-row bg-blue-500 text-white rounded-lg cursor-grab shadow-md">
-                <div {...listeners} className="flex flex-grow p-1">
-                  {item.text}
+                <div {...listeners} className="flex flex-grow p-1 pl-4">
+                  {prettyPrintColumnName(item.text)}
                 </div>
                 {!isGrouped && (
                   <>
@@ -316,8 +320,11 @@ export const TanstackExploreTable = ({ data }: TanstackExploreTableProps) => {
                   </>
                 )}
                 
-                <button className="p-1" onClick={() => setFilterDropdownCol(filterDropdownCol === colId ? null : colId)}>
-                  🔽
+                <button className="p-1 flex flex-row" onClick={() => setFilterDropdownCol(filterDropdownCol === colId ? null : colId)}>
+                  {allValues.length == activeFilterValues.length ? 
+                    <span className='p-1'><MdFilterList /></span> : 
+                    <span><IoFilterCircleOutline size={24} /></span>
+                    }
                 </button>
               </div>
       
