@@ -61,8 +61,7 @@ const columns = [
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
     cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
+      const value = getValue();
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
@@ -72,7 +71,6 @@ const columns = [
         }
         const localDate = new Date(val + 'T00:00:00');
         const num = localDate.getTime();
-        setValue(num);
         table.options.meta?.updateData(row.index, column.id, num); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
@@ -105,8 +103,7 @@ const columns = [
   columnHelper.accessor('amount', {
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
+      const value = getValue();
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
@@ -115,7 +112,6 @@ const columns = [
           val = "0";
         }
         const num = Number(val);
-        setValue(num);
         table.options.meta?.updateData(row.index, column.id, num); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
@@ -139,81 +135,9 @@ const columns = [
       filterVariant: 'range',
     },
   }),
-  columnHelper.accessor('source', {
-    cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
-
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
-          val = "";
-        }
-        const str = String(val);
-        setValue(str);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          source: str
-        });
-      };
-
-      return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          suggestions={getPossibleValuesFromCol(column)}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'select',
-    },
-  }),
-  columnHelper.accessor('transactionInfo', {
-    cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
-
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
-          val="";
-        }
-        const str = String(val);
-        setValue(str);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          transactionInfo: str
-        });
-      };
-
-      return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'search',
-    },
-  }),
   columnHelper.accessor('category', {
     cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
+      const value = getValue();
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
@@ -222,8 +146,7 @@ const columns = [
           console.warn(`${prettyPrintString(column.id)} is blank. Setting to undefined.`);
           isBlank = true;
         }
-        const str = String(val);
-        setValue(str);
+        const str = isBlank ? undefined : String(val);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
@@ -255,8 +178,7 @@ const columns = [
   }),
   columnHelper.accessor('providedDetail', {
     cell: ({ getValue, row, column, table }) => {
-      const initialValue = getValue();
-      const [value, setValue] = useState(initialValue);
+      const value = getValue();
 
       // Handle changes to the input field
       const onChange = async (val: any) => {
@@ -265,8 +187,7 @@ const columns = [
           console.warn(`${prettyPrintString(column.id)} is blank. Setting to null.`);
           isBlank = true;
         }
-        const str = String(val);
-        setValue(str);
+        const str = isBlank ? undefined : String(val);
         table.options.meta?.updateData(row.index, column.id, str); // Update data on change
         await updateRow(row.original.transactionId, {
           ...row.original,
@@ -287,6 +208,73 @@ const columns = [
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'search',
+    },
+  }),
+  columnHelper.accessor('transactionInfo', {
+    cell: ({ getValue, row, column, table }) => {
+      const value = getValue();
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+          val="";
+        }
+        const str = String(val);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          transactionInfo: str
+        });
+      };
+
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
+      </>;
+    },
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    meta: {
+      filterVariant: 'search',
+    },
+  }),
+  columnHelper.accessor('source', {
+    cell: ({ getValue, row, column, table }) => {
+      const value = getValue();
+
+      // Handle changes to the input field
+      const onChange = async (val: any) => {
+        if(val == null || val == undefined) {
+          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+          val = "";
+        }
+        const str = String(val);
+        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+        await updateRow(row.original.transactionId, {
+          ...row.original,
+          source: str
+        });
+      };
+
+      return <>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          suggestions={getPossibleValuesFromCol(column)}
+          onChange={onChange}
+        />
+      </>;
+    },
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    meta: {
+      filterVariant: 'select',
     },
   }),
 ];
@@ -364,7 +352,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     meta: {
-      updateData: (rowIndex, columnId, value) => {
+      updateData: (rowIndex: number, columnId: string, value: unknown) => {
         // Skip page index reset until after next rerender
         skipAutoResetPageIndex();
         setRowData(old =>

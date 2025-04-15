@@ -11,6 +11,8 @@ import {
   OnWriteRowToDatabaseResult,
   ReadDatabaseRowsProps,
   UpdateRowInDatabaseProps,
+  ReadEmptyCategoryDatabaseRowsProps,
+  OnReadEmptyCategoryDatabaseRowsResult,
 } from "../../preload";
 
 export default class DatabaseService {
@@ -66,6 +68,19 @@ export default class DatabaseService {
       };
       window.electronAPI.onWriteRowToDatabaseIfMissing(handler);
       window.electronAPI.writeRowToDatabaseIfMissing(props);
+    });
+  }
+
+  static readEmptyCategoryDatabaseRows(
+    props?: ReadEmptyCategoryDatabaseRowsProps
+  ): Promise<OnReadEmptyCategoryDatabaseRowsResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnReadEmptyCategoryDatabaseRowsResult) => {
+        window.electronAPI.detachOnReadEmptyCategoryDatabaseRows(handler);
+        resolve(result);
+      };
+      window.electronAPI.onReadEmptyCategoryDatabaseRows(handler);
+      window.electronAPI.readEmptyCategoryDatabaseRows(props);
     });
   }
 

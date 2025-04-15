@@ -5,6 +5,7 @@ import { TanstackDataTable } from "./views/TanstackDatatable";
 import { TanstackExploreTable } from "./views/TanstackExploreTable";
 import { prettyPrintString } from "./util/util";
 import DatabaseService from "./util/DatabaseService";
+import { RuleBasedCategorizer } from "./views/RuleBasedCategorizer";
 
 const App = () => {
   useEffect(() => {
@@ -30,7 +31,7 @@ const App = () => {
 
       {activeTab === "pivotTable" && <TanstackExploreTable />}
       {activeTab === "multiFileUploader" && <MultiFileUploader />}
-      {activeTab === "fillTable" && <>hi</>}
+      {activeTab === "fillTable" && <RuleBasedCategorizer />}
       {activeTab === "tanstackTable" && <TanstackDataTable />}
     </div>
   );

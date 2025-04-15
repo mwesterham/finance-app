@@ -36,6 +36,12 @@ export interface OnDeleteRowFromDatabaseResult extends Result {
   deleted: boolean;
 }
 
+export interface ReadEmptyCategoryDatabaseRowsProps {
+}
+export interface OnReadEmptyCategoryDatabaseRowsResult extends Result {
+  rows: FinanceSheetRow[];
+}
+
 export interface WriteRowToDatabaseIfMissingProps {
   rows: FinanceSheetRow[];
 }
@@ -84,6 +90,12 @@ const electronAPI = {
     ipcRenderer.on('writeRowToDatabaseIfMissingResult', callback),
   detachOnWriteRowToDatabaseIfMissing: (callback: (event: any, values: OnWriteRowToDatabaseIfMissingResult) => void) => 
     ipcRenderer.removeListener('writeRowToDatabaseIfMissingResult', callback),
+
+  readEmptyCategoryDatabaseRows: async (props?: ReadEmptyCategoryDatabaseRowsProps) => ipcRenderer.send('readEmptyCategoryDatabaseRows', props),
+  onReadEmptyCategoryDatabaseRows: (callback: (event: any, values: OnReadEmptyCategoryDatabaseRowsResult) => void) => 
+    ipcRenderer.on('readEmptyCategoryDatabaseRowsResult', callback),
+  detachOnReadEmptyCategoryDatabaseRows: (callback: (event: any, values: OnReadEmptyCategoryDatabaseRowsResult) => void) => 
+    ipcRenderer.on('readEmptyCategoryDatabaseRowsResult', callback),
 
   getDbLocalPath: async (props?: GetDbLocalPathProps) => ipcRenderer.send('getDbLocalPath', props),
   onGetDbLocalPath: (callback: (event: any, values: OnGetDbLocalPathResult) => void) => 

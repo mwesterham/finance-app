@@ -105,6 +105,35 @@ export class WesterhamDatabase {
     });
   }
 
+  public async getAllFinanceSheetRowsWhereColumnEmpty(col: string): Promise<FinanceSheetRow[]> {
+    return new Promise((resolve, reject) => {
+      // Sanitize column name by allowing only alphanumeric + underscore characters
+      const sanitizedCol = col.replace(/[^a-zA-Z0-9_]/g, '');
+  
+      const query = `
+        SELECT 
+          transaction_id AS transactionId, 
+          epoch, 
+          amount, 
+          transaction_info AS transactionInfo, 
+          source, 
+          category, 
+          provided_detail AS providedDetail 
+        FROM ${this.FINANCE_TABLE_NAME}
+        WHERE ${sanitizedCol} IS NULL
+      `;
+  
+      this.db.all<FinanceSheetRow>(query, [], (err, rows) => {
+        if (err) {
+          reject("Error fetching FinanceSheetRows: " + err);
+        } else {
+          console.log(`Successfully returned rows with NULL '${sanitizedCol}' from ${this.FINANCE_TABLE_NAME}`);
+          resolve(rows);
+        }
+      });
+    });
+  }
+
   public async deleteFinanceSheetRow(transactionId: number): Promise<void> {
     const query = `DELETE FROM ${this.FINANCE_TABLE_NAME} WHERE transaction_id = ?`;
     return new Promise((resolve, reject) => {
