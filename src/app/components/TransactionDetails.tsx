@@ -1,15 +1,6 @@
 import React from "react";
 import { formatAmount } from "../util/util";
-
-interface FinanceSheetRow {
-  transactionId?: string;
-  epoch: number;
-  amount: number;
-  source: string;
-  transactionInfo: string;
-  category?: string;
-  providedDetail?: string;
-}
+import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 
 interface TransactionDetailsProps {
   transaction: FinanceSheetRow;

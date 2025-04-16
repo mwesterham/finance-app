@@ -1,7 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import {ipcRenderer, contextBridge} from "electron";
-import { FinanceSheetRow } from "./db/WesterhamDatabase";
+import { FinanceSheetRow, Rule } from "./db/WesterhamDatabase";
 
 // Declare types globally
 declare global {
@@ -66,6 +66,36 @@ export interface OnUpdateRowInDatabaseResult extends Result {
   data: any;
 }
 
+export interface ReadDatabaseRulesProps {
+}
+export interface OnReadDatabaseRulesResult extends Result {
+  rules: Rule[];
+}
+
+export interface WriteDatabaseRulesProps {
+  rule: Rule;
+}
+export interface OnWriteDatabaseRulesResult extends Result {
+  data: any;
+  newRuleId: number;
+}
+
+export interface DeleteDatabaseRulesProps {
+  ruleId: number;
+}
+export interface OnDeleteDatabaseRulesResult extends Result {
+  deletedId: number;
+  deleted: boolean;
+}
+
+export interface UpdateRuleInDatabaseProps {
+  ruleId: string;
+  rule: Rule;
+}
+export interface OnUpdateRuleInDatabaseResult extends Result {
+  data: any;
+}
+
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
@@ -108,6 +138,30 @@ const electronAPI = {
     ipcRenderer.on('onUpdateRowInDatabase', callback),
   detachOnUpdateRowInDatabase: (callback: (event: any, values: OnUpdateRowInDatabaseResult) => void) => 
     ipcRenderer.removeListener('onUpdateRowInDatabase', callback),
+
+  readDatabaseRules: async (props?: ReadDatabaseRulesProps) => ipcRenderer.send('readDatabaseRules', props),
+  onReadDatabaseRules: (callback: (event: any, values: OnReadDatabaseRulesResult) => void) => 
+    ipcRenderer.on('readDatabaseRulesResult', callback),
+  detachOnReadDatabaseRules: (callback: (event: any, values: OnReadDatabaseRulesResult) => void) => 
+    ipcRenderer.removeListener('readDatabaseRulesResult', callback),
+
+  writeDatabaseRules: async (props?: WriteDatabaseRulesProps) => ipcRenderer.send('writeDatabaseRules', props),
+  onWriteDatabaseRules: (callback: (event: any, values: OnWriteDatabaseRulesResult) => void) => 
+    ipcRenderer.on('writeDatabaseRulesResult', callback),
+  detachOnWriteDatabaseRules: (callback: (event: any, values: OnWriteDatabaseRulesResult) => void) => 
+    ipcRenderer.removeListener('writeDatabaseRulesResult', callback),
+
+  deleteDatabaseRules: async (props?: DeleteDatabaseRulesProps) => ipcRenderer.send('deleteDatabaseRules', props),
+  onDeleteDatabaseRules: (callback: (event: any, values: OnDeleteDatabaseRulesResult) => void) => 
+    ipcRenderer.on('deleteDatabaseRulesResult', callback),
+  detachOnDeleteDatabaseRules: (callback: (event: any, values: OnDeleteDatabaseRulesResult) => void) => 
+    ipcRenderer.removeListener('deleteDatabaseRulesResult', callback),
+
+  updateRuleInDatabase: async (props?: UpdateRuleInDatabaseProps) => ipcRenderer.send('updateRuleInDatabase', props),
+  onUpdateRuleInDatabase: (callback: (event: any, values: OnUpdateRuleInDatabaseResult) => void) => 
+    ipcRenderer.on('onUpdateRuleInDatabase', callback),
+  detachOnUpdateRuleInDatabase: (callback: (event: any, values: OnUpdateRuleInDatabaseResult) => void) => 
+    ipcRenderer.removeListener('onUpdateRuleInDatabase', callback),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

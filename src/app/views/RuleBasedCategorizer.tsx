@@ -12,11 +12,10 @@ import {
   getFilteredRowModel
 } from '@tanstack/react-table';
 import { filterFns } from "@tanstack/table-core";
-import { FinanceSheetRow } from '../../db/WesterhamDatabase';
+import { FinanceSheetRow, Rule } from '../../db/WesterhamDatabase';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
 import {
-  MdDeleteForever,
   MdKeyboardDoubleArrowRight,
   MdKeyboardDoubleArrowLeft,
   MdKeyboardArrowRight,
@@ -83,14 +82,7 @@ const CATEGORIES = [
   "33 - Restringing Payment"
 ];
 
-
-interface Rule {
-  matchingExpression: string;
-  category: string;
-  providedDetail?: string;
-}
-
-const rules = [
+const rules: Rule[] = [
   { matchingExpression: "AMAZON.COM SVCS DIRECT DEP", category: "01 - Deposit", providedDetail: "Paycheck" },
   { matchingExpression: "WELLS FARGO REWARDS", category: "01 - Deposit", providedDetail: "Cash Rewards" },
   { matchingExpression: "STARBUCKS", category: "16 - Restaurant", providedDetail: "Drink" },

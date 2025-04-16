@@ -13,6 +13,14 @@ import {
   UpdateRowInDatabaseProps,
   ReadEmptyCategoryDatabaseRowsProps,
   OnReadEmptyCategoryDatabaseRowsResult,
+  ReadDatabaseRulesProps,
+  OnReadDatabaseRulesResult,
+  WriteDatabaseRulesProps,
+  OnWriteDatabaseRulesResult,
+  DeleteDatabaseRulesProps,
+  OnDeleteDatabaseRulesResult,
+  UpdateRuleInDatabaseProps,
+  OnUpdateRuleInDatabaseResult,
 } from "../../preload";
 
 export default class DatabaseService {
@@ -107,6 +115,58 @@ export default class DatabaseService {
       };
       window.electronAPI.onUpdateRowInDatabase(handler);
       window.electronAPI.updateRowInDatabase(props);
+    });
+  }
+
+  static readDatabaseRules(
+    props?: ReadDatabaseRulesProps
+  ): Promise<OnReadDatabaseRulesResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnReadDatabaseRulesResult) => {
+        window.electronAPI.detachOnReadDatabaseRules(handler);
+        resolve(result);
+      };
+      window.electronAPI.onReadDatabaseRules(handler);
+      window.electronAPI.readDatabaseRules(props);
+    });
+  }
+
+  static writeRuleToDatabase(
+    props: WriteDatabaseRulesProps
+  ): Promise<OnWriteDatabaseRulesResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnWriteDatabaseRulesResult) => {
+        window.electronAPI.detachOnWriteDatabaseRules(handler);
+        resolve(result);
+      };
+      window.electronAPI.onWriteDatabaseRules(handler);
+      window.electronAPI.writeDatabaseRules(props);
+    });
+  }
+
+  static deleteRuleFromDatabase(
+    props: DeleteDatabaseRulesProps
+  ): Promise<OnDeleteDatabaseRulesResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnDeleteDatabaseRulesResult) => {
+        window.electronAPI.detachOnDeleteDatabaseRules(handler);
+        resolve(result);
+      };
+      window.electronAPI.onDeleteDatabaseRules(handler);
+      window.electronAPI.deleteDatabaseRules(props);
+    });
+  }
+
+  static updateRuleInDatabase(
+    props?: UpdateRuleInDatabaseProps
+  ): Promise<OnUpdateRuleInDatabaseResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnUpdateRuleInDatabaseResult) => {
+        window.electronAPI.detachOnUpdateRuleInDatabase(handler);
+        resolve(result);
+      };
+      window.electronAPI.onUpdateRuleInDatabase(handler);
+      window.electronAPI.updateRuleInDatabase(props);
     });
   }
 }

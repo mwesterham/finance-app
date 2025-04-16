@@ -6,6 +6,7 @@ import { TanstackExploreTable } from "./views/TanstackExploreTable";
 import { prettyPrintString } from "./util/util";
 import DatabaseService from "./util/DatabaseService";
 import { RuleBasedCategorizer } from "./views/RuleBasedCategorizer";
+import { RuleManager } from "./views/RuleManager";
 
 const App = () => {
   useEffect(() => {
@@ -18,7 +19,7 @@ const App = () => {
     <div className="p-4 space-y-4">
       {/* Tab Navigation */}
       <div className="mb-4 flex border-b">
-        {["pivotTable", "tanstackTable", "fillTable", "multiFileUploader"].map((tab) => (
+        {["pivotTable", "tanstackTable", "fillTable", "ruleManager", "multiFileUploader"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -32,6 +33,7 @@ const App = () => {
       {activeTab === "pivotTable" && <TanstackExploreTable />}
       {activeTab === "multiFileUploader" && <MultiFileUploader />}
       {activeTab === "fillTable" && <RuleBasedCategorizer />}
+      {activeTab === "ruleManager" && <RuleManager />}
       {activeTab === "tanstackTable" && <TanstackDataTable />}
     </div>
   );
