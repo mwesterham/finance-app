@@ -19,7 +19,8 @@ import {
   MdKeyboardDoubleArrowRight,
   MdKeyboardDoubleArrowLeft,
   MdKeyboardArrowRight,
-  MdKeyboardArrowLeft
+  MdKeyboardArrowLeft,
+  MdAssignmentAdd
 } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
@@ -32,6 +33,8 @@ import WithTooltip from '../components/WithTooltip';
 import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
+import RuleDetails from '../components/RuleDetails';
+import { RuleForm } from '../components/RuleForm';
 
 
 declare module '@tanstack/react-table' {
@@ -82,84 +85,14 @@ const CATEGORIES = [
   "33 - Restringing Payment"
 ];
 
-const rules: Rule[] = [
-  { matchingExpression: "AMAZON.COM SVCS DIRECT DEP", category: "01 - Deposit", providedDetail: "Paycheck" },
-  { matchingExpression: "WELLS FARGO REWARDS", category: "01 - Deposit", providedDetail: "Cash Rewards" },
-  { matchingExpression: "STARBUCKS", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "CHIPOTLE 2859 PHOENIX AZ", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "THE STREET BOBA CAFE", category: "16 - Restaurant" },
-  { matchingExpression: "EOS FITNESS ABC CLUB FEES", category: "19 - Fitness", providedDetail: "Gym Membership + Annual Fee" },
-  { matchingExpression: "COSTCO WHSE", category: "15 - Groceries" },
-  { matchingExpression: "WF Credit Card AUTO PAY", category: "13 - CC Payment", providedDetail: "CC Pmt - MATTHEW" },
-  { matchingExpression: "SCHWAB BROKERAGE MONEYLINK", category: "25 - Investments", providedDetail: "Cash Acct" },
-  { matchingExpression: "EVERYDAY CHECKING MONTHLY CAR PAYMENT", category: "17 - Auto", providedDetail: "Rav4 XLE Car Payment" },
-  { matchingExpression: "FRYS-MKTPLACE", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
-  { matchingExpression: "SAFEWAY", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
-  { matchingExpression: "FRYS-FOOD-DRG", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
-  { matchingExpression: "AMAZON GROCE*", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
-  { matchingExpression: "LEE LEE INTERNATIONAL", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
-  { matchingExpression: "Amazon Tips", category: "15 - Groceries", providedDetail: "Grocery tips" },
-  { matchingExpression: "AUTOMATIC PAYMENT - THANK YOU", category: "13 - CC Payment", providedDetail: "CC PMT" },
-  { matchingExpression: "8680 EOS FITNESS", category: "19 - Fitness", providedDetail: "EoS Gym Membership" },
-  { matchingExpression: "ARIZONA BADMINTON CENT MESA AZ", category: "19 - Fitness", providedDetail: undefined },
-  { matchingExpression: "COSTCO GAS", category: "17 - Auto", providedDetail: "Gas" },
-  { matchingExpression: "TST* AHIPOKI", category: "16 - Restaurant", providedDetail: "Hawaiian Food" },
-  { matchingExpression: "PANERA BREAD", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "CAFE ZUPAS", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "PERFECT PEAR BISTRO", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "RAISING CANES", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "TST*ANGIES LOBSTER", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "JASON'S DELI", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "TST* CAFE 86-CHANDLER", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "THE KICKIN CRAB", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "GOLDEN CORRAL", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "TST*JOES REAL BBQ", category: "16 - Restaurant", providedDetail: "American Food" },
-  { matchingExpression: "LA MADELENINE", category: "16 - Restaurant", providedDetail: "French Food" },
-  { matchingExpression: "SAKURA SUSHI", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "SUSHI SAN", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "TASTY POT", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "SQ *SO GONG DONG", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "CHODANG RESTAURANT", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "PACIFIC SEAFOOD BUFFET", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "MOCHINUT", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "SQ *A MA'S KITCHEN AND", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "85C BAKERY CAFE", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "POP POT & TEA.", category: "16 - Restaurant", providedDetail: "Asian Food" },
-  { matchingExpression: "DAVES HOT CHICKEN", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "SQ *CAIRO'S GYROS", category: "16 - Restaurant", providedDetail: "Mediterranean Food" },
-  { matchingExpression: "SQ *GREEN CORNER", category: "16 - Restaurant", providedDetail: "Mediterranean Food" },
-  { matchingExpression: "SNOWTIME", category: "16 - Restaurant", providedDetail: "Dessert" },
-  { matchingExpression: "MEET FRESH", category: "16 - Restaurant", providedDetail: "Dessert" },
-  { matchingExpression: "GDP*Gelato Cimmino", category: "16 - Restaurant", providedDetail: "Dessert" },
-  { matchingExpression: "SALAD AND GO", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "WENDY'S", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "SONIC DRIVE IN", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "SQ *SHAKE SHACK", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "ARBYS", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "MCDONALD", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "JACK IN THE BOX", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "PANDA EXPRESS", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "FIVE BELOW", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "TWO HANDS", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "CHICK-FIL-A", category: "16 - Restaurant", providedDetail: "Fast Food" },
-  { matchingExpression: "DABOBA", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "SQ *ZERO DEGREES", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "THE ALLEY", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "CARIBOU COFFEE", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "KADA VIETNAMESE COFFEE", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "POLBA TEA", category: "16 - Restaurant", providedDetail: "Drink" },
-  { matchingExpression: "Amazon Prime*", category: "31 - Subscription", providedDetail: "Amazon Prime" },
-  { matchingExpression: "GOOGLE *Ellation 855-836-3987 CA", category: "31 - Subscription", providedDetail: "Crunchyroll subscription" },
-  { matchingExpression: "GOOGLE *Crunchyroll", category: "31 - Subscription", providedDetail: "Crunchyroll subscription" },
-  { matchingExpression: "FRYS FUEL", category: "17 - Auto", providedDetail: "Gas" },
-  { matchingExpression: "STATE FARM INSURANCE", category: "17 - Auto", providedDetail: "Insurance" },
-  { matchingExpression: "BIG O TIRES", category: "17 - Auto", providedDetail: undefined },
-  { matchingExpression: "FSP*DOWNTOWN TEMPE", category: "17 - Auto", providedDetail: "Parking Pass" },
-  { matchingExpression: "DTA-PM COT parkmobilecomAZ", category: "17 - Auto", providedDetail: "Parking Fee" },
-  { matchingExpression: "PARKING - SE HFG", category: "17 - Auto", providedDetail: "Parking Fee" },
-  { matchingExpression: "DAISO", category: "14 - Misc Exp", providedDetail: undefined },
-];
-
+const ruleFromFinanceRow = (row: FinanceSheetRow) => {
+  return {
+    ruleId: "N/A",
+    matchingExpression: row.transactionInfo,
+    category: row.category,
+    providedDetail: row.providedDetail,
+  } as Rule;
+}
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
 
@@ -188,7 +121,7 @@ const columns = [
       // Handle changes to the input field
       const onChange = async (val: any) => {
         let isBlank = false;
-        if(val == null || val == undefined) {
+        if (val == null || val == undefined) {
           console.warn(`${prettyPrintString(column.id)} is blank. Setting to undefined.`);
           isBlank = true;
         }
@@ -225,7 +158,7 @@ const columns = [
       // Handle changes to the input field
       const onChange = async (val: any) => {
         let isBlank = false;
-        if(val == null || val == undefined) {
+        if (val == null || val == undefined) {
           console.warn(`${prettyPrintString(column.id)} is blank. Setting to null.`);
           isBlank = true;
         }
@@ -263,6 +196,14 @@ const columns = [
       filterVariant: 'search',
     },
   }),
+  columnHelper.accessor('source', {
+    cell: info => info.getValue(),
+    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    meta: {
+      filterVariant: 'select',
+    },
+  }),
 ];
 
 export interface RuleBasedCategorizerProps {
@@ -270,18 +211,25 @@ export interface RuleBasedCategorizerProps {
 
 export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
   const [rowData, setRowData] = useState<FinanceSheetRow[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [ruleToShow, setRuleToShow] = useState<Rule>(null);
 
   useEffect(() => {
     fetchDatabaseRows();
+    fetchDatabaseRules();
   }, []);
-  
 
-  const updateRow = async (transactionId: string, row: FinanceSheetRow) => {
-    const result = await DatabaseService.updateRowInDatabase({
-      transactionId,
-      row,
-    });
-    console.log(result);
+
+  const updateRows = async () => {
+    rowData.forEach(async (row: FinanceSheetRow) => {
+      if (row.transactionId && row.category) {
+        const result = DatabaseService.updateRowInDatabase({
+          transactionId: row.transactionId,
+          row,
+        });
+        console.log(result);
+      }
+    })
   };
 
   const applyRules = async () => {
@@ -298,16 +246,20 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
         row.providedDetail = matchedRule.providedDetail;
       }
     }
-
     setRowData([...newRowData]);
-
-    // await fetchDatabaseRows();
   };
 
   const fetchDatabaseRows = async () => {
     DatabaseService.readEmptyCategoryDatabaseRows().then((values) => {
-      console.log("Database read result length:", values.rows.length);
+      console.log("Database rinance rows read result length:", values.rows.length);
       setRowData(values.rows);
+    });
+  };
+
+  const fetchDatabaseRules = async () => {
+    DatabaseService.readDatabaseRules().then((values) => {
+      console.log("Database rules read result length:", values.rules.length);
+      setRules(values.rules);
     });
   };
 
@@ -357,19 +309,33 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
     },
   });
 
-  return (
+  return (<>
     <div className="p-4 bg-white shadow-md rounded-lg">
-      <button
-        onClick={applyRules}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4"
-      >
-        Fill Database Using Rules
-      </button>
+      <div className='flex space-x-4'>
+        <button
+          onClick={applyRules}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4"
+        >
+          Fill Database Using Rules (found {rules.length} rules)
+        </button>
+        <button
+          onClick={async () => {
+            await updateRows();
+            fetchDatabaseRows();
+          }}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4"
+        >
+          Submit changes
+        </button>
+      </div>
       <table className="min-w-full border-collapse border border-gray-300">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} className="border-b border-gray-300">
-              {headerGroup.headers.map(header => (
+              <th key={`${headerGroup.id}-custom-1`} className="px-4 py-2 text-left">
+                Manage
+              </th>
+              {headerGroup.headers.map(header => (<>
                 <th key={header.id} colSpan={header.colSpan} className="px-4 py-2 text-left">
                   {header.isPlaceholder ? null : (
                     <div className='flex items-center'>
@@ -385,7 +351,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                     </div>
                   )}
                 </th>
-              ))}
+              </>))}
             </tr>
           ))}
         </thead>
@@ -398,6 +364,16 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                   "border-b"
                 )}
               >
+                <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
+                  <span className="flex flex-grow items-center justify-center space-x-2">
+                    <WithTooltip text='Create Rule' position='left'>
+                      <MdAssignmentAdd
+                        className="text-blue-500 cursor-pointer hover:text-blue-700 min-w-5 min-h-5"
+                        onClick={() => setRuleToShow(ruleFromFinanceRow(row.original))}
+                      />
+                    </WithTooltip>
+                  </span>
+                </td>
                 {row.getVisibleCells().map(cell => (
                   <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -444,20 +420,25 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
         </select>
       </div>
       <div className="mt-2 text-sm">{table.getPrePaginationRowModel().rows.length} Rows</div>
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-2">Defined Rules</h2>
-        <div className="mt-4">
-          <ul className="list-disc list-inside space-y-1">
-            {rules.map((rule, idx) => (
-              <li key={idx}>
-                <span className="font-medium">"{rule.matchingExpression}"</span> ➝{" "}
-                <span className="italic">{rule.category}</span>
-              </li>
-            ))}
-          </ul>
+    </div>
+    {ruleToShow && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-xl w-full">
+          <h1 className="text-xl font-semibold pb-4">Create Rule</h1>
+          <RuleForm
+            defaultRule={ruleToShow}
+            onSubmit={async (newRule) => {
+              await DatabaseService.writeRuleToDatabase({ rule: newRule });
+              setRuleToShow(null);
+              fetchDatabaseRules();
+            }}
+            onCancel={() => setRuleToShow(null)}
+            categories={CATEGORIES}
+          />
         </div>
       </div>
-    </div>
+    )}
+  </>
   );
 };
 

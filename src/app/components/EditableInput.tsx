@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { GoPencil, GoCheck, GoX } from 'react-icons/go';
 
 interface EditableInputProps {
@@ -13,6 +13,12 @@ const EditableInput = ({ value, type, suggestions, displayBody, onChange }: Edit
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const [initialValue, setInitialValue] = useState(value);
+
+  useEffect(() => {
+    setIsEditing(false);
+    setInputValue(value);
+    setInitialValue(value);
+  }, [value])
 
   const handleClickEdit = () => {
     setIsEditing(true);

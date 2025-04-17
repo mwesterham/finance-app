@@ -40,10 +40,13 @@ export default class VenmoParser implements IParser<string, VenmoInputRow[]> {
         
         // Skip the first 4 rows, and last row
         data.slice(4, -1).forEach(row => {
+          const amount = formatVenmoNumber(row[8]);
+          const destination: string = row[15];
+          const isDeposit = destination.includes("Wells Fargo");
           rows.push({
             date: cleanDate(row[2]),
-            amount: formatVenmoNumber(row[8]),
-            detail: row[5],
+            amount: amount < 0 && !isDeposit ? 0 : amount,
+            detail: isDeposit ? "Bank deposit" : row[5],
           });
         });
       },

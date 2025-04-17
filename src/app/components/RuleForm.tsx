@@ -3,14 +3,15 @@ import { Rule } from "../../db/WesterhamDatabase";
 
 interface RuleFormProps {
   onSubmit: (rule: Rule) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   categories?: string[];
+  defaultRule?: Rule;
 }
 
-export const RuleForm: React.FC<RuleFormProps> = ({ onSubmit, onCancel, categories }) => {
-  const [matchingExpression, setMatchingExpression] = useState("");
-  const [category, setCategory] = useState("");
-  const [providedDetail, setProvidedDetail] = useState("");
+export const RuleForm: React.FC<RuleFormProps> = ({ onSubmit, onCancel, categories, defaultRule }) => {
+  const [matchingExpression, setMatchingExpression] = useState(defaultRule ? defaultRule.matchingExpression : "");
+  const [category, setCategory] = useState(defaultRule && defaultRule.category ? defaultRule.category : "");
+  const [providedDetail, setProvidedDetail] = useState(defaultRule && defaultRule.providedDetail ? defaultRule.providedDetail : "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

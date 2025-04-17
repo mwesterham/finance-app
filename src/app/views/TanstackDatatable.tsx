@@ -197,6 +197,7 @@ const columns = [
 
       return <>
         <EditableInput
+          suggestions={getPossibleValuesFromCol(column)}
           value={value}
           type="text"
           displayBody={<>{value}</>}

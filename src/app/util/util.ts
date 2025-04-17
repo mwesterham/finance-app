@@ -6,7 +6,7 @@ export const cleanNumber = (str: string): number => {
 
 export const formatVenmoNumber = (str: string): number => {
   const val = parseFloat(str.replace(/[^0-9.-]/g, "").trim());
-  return val < 0 ? 0 : val;
+  return val;
 };
 
 export const prettyPrintString = (str: string): string => {

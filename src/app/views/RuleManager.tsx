@@ -214,6 +214,84 @@ const columns = [
   }),
 ];
 
+const rules: Rule[] = [
+  { matchingExpression: "AMAZON.COM SVCS DIRECT DEP", category: "01 - Deposit", providedDetail: "Paycheck" },
+  { matchingExpression: "WELLS FARGO REWARDS", category: "01 - Deposit", providedDetail: "Cash Rewards" },
+  { matchingExpression: "STARBUCKS", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "CHIPOTLE 2859 PHOENIX AZ", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "THE STREET BOBA CAFE", category: "16 - Restaurant" },
+  { matchingExpression: "EOS FITNESS ABC CLUB FEES", category: "19 - Fitness", providedDetail: "Gym Membership + Annual Fee" },
+  { matchingExpression: "COSTCO WHSE", category: "15 - Groceries" },
+  { matchingExpression: "WF Credit Card AUTO PAY", category: "13 - CC Payment", providedDetail: "CC Pmt - MATTHEW" },
+  { matchingExpression: "SCHWAB BROKERAGE MONEYLINK", category: "25 - Investments", providedDetail: "Cash Acct" },
+  { matchingExpression: "EVERYDAY CHECKING MONTHLY CAR PAYMENT", category: "17 - Auto", providedDetail: "Rav4 XLE Car Payment" },
+  { matchingExpression: "FRYS-MKTPLACE", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
+  { matchingExpression: "SAFEWAY", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
+  { matchingExpression: "FRYS-FOOD-DRG", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
+  { matchingExpression: "AMAZON GROCE*", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
+  { matchingExpression: "LEE LEE INTERNATIONAL", category: "15 - Groceries", providedDetail: "Grocery Shopping" },
+  { matchingExpression: "Amazon Tips", category: "15 - Groceries", providedDetail: "Grocery tips" },
+  { matchingExpression: "AUTOMATIC PAYMENT - THANK YOU", category: "13 - CC Payment", providedDetail: "CC PMT" },
+  { matchingExpression: "8680 EOS FITNESS", category: "19 - Fitness", providedDetail: "EoS Gym Membership" },
+  { matchingExpression: "ARIZONA BADMINTON CENT MESA AZ", category: "19 - Fitness", providedDetail: undefined },
+  { matchingExpression: "COSTCO GAS", category: "17 - Auto", providedDetail: "Gas" },
+  { matchingExpression: "TST* AHIPOKI", category: "16 - Restaurant", providedDetail: "Hawaiian Food" },
+  { matchingExpression: "PANERA BREAD", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "CAFE ZUPAS", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "PERFECT PEAR BISTRO", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "RAISING CANES", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "TST*ANGIES LOBSTER", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "JASON'S DELI", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "TST* CAFE 86-CHANDLER", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "THE KICKIN CRAB", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "GOLDEN CORRAL", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "TST*JOES REAL BBQ", category: "16 - Restaurant", providedDetail: "American Food" },
+  { matchingExpression: "LA MADELENINE", category: "16 - Restaurant", providedDetail: "French Food" },
+  { matchingExpression: "SAKURA SUSHI", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "SUSHI SAN", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "TASTY POT", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "SQ *SO GONG DONG", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "CHODANG RESTAURANT", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "PACIFIC SEAFOOD BUFFET", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "MOCHINUT", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "SQ *A MA'S KITCHEN AND", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "85C BAKERY CAFE", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "POP POT & TEA.", category: "16 - Restaurant", providedDetail: "Asian Food" },
+  { matchingExpression: "DAVES HOT CHICKEN", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "SQ *CAIRO'S GYROS", category: "16 - Restaurant", providedDetail: "Mediterranean Food" },
+  { matchingExpression: "SQ *GREEN CORNER", category: "16 - Restaurant", providedDetail: "Mediterranean Food" },
+  { matchingExpression: "SNOWTIME", category: "16 - Restaurant", providedDetail: "Dessert" },
+  { matchingExpression: "MEET FRESH", category: "16 - Restaurant", providedDetail: "Dessert" },
+  { matchingExpression: "GDP*Gelato Cimmino", category: "16 - Restaurant", providedDetail: "Dessert" },
+  { matchingExpression: "SALAD AND GO", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "WENDY'S", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "SONIC DRIVE IN", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "SQ *SHAKE SHACK", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "ARBYS", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "MCDONALD", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "JACK IN THE BOX", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "PANDA EXPRESS", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "FIVE BELOW", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "TWO HANDS", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "CHICK-FIL-A", category: "16 - Restaurant", providedDetail: "Fast Food" },
+  { matchingExpression: "DABOBA", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "SQ *ZERO DEGREES", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "THE ALLEY", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "CARIBOU COFFEE", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "KADA VIETNAMESE COFFEE", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "POLBA TEA", category: "16 - Restaurant", providedDetail: "Drink" },
+  { matchingExpression: "Amazon Prime*", category: "31 - Subscription", providedDetail: "Amazon Prime" },
+  { matchingExpression: "GOOGLE *Ellation 855-836-3987 CA", category: "31 - Subscription", providedDetail: "Crunchyroll subscription" },
+  { matchingExpression: "GOOGLE *Crunchyroll", category: "31 - Subscription", providedDetail: "Crunchyroll subscription" },
+  { matchingExpression: "FRYS FUEL", category: "17 - Auto", providedDetail: "Gas" },
+  { matchingExpression: "STATE FARM INSURANCE", category: "17 - Auto", providedDetail: "Insurance" },
+  { matchingExpression: "BIG O TIRES", category: "17 - Auto", providedDetail: undefined },
+  { matchingExpression: "FSP*DOWNTOWN TEMPE", category: "17 - Auto", providedDetail: "Parking Pass" },
+  { matchingExpression: "DTA-PM COT parkmobilecomAZ", category: "17 - Auto", providedDetail: "Parking Fee" },
+  { matchingExpression: "PARKING - SE HFG", category: "17 - Auto", providedDetail: "Parking Fee" },
+  { matchingExpression: "DAISO", category: "14 - Misc Exp", providedDetail: undefined },
+];
+
 export interface RuleManagerProps {
 }
 
@@ -225,13 +303,6 @@ export const RuleManager = (props: RuleManagerProps) => {
   useEffect(() => {
     fetchDatabaseRules();
   }, []);
-
-  const writeRule = async (rule: Rule) => {
-    const result = await DatabaseService.writeRuleToDatabase({
-      rule,
-    });
-    console.log(result);
-  };
 
   const fetchDatabaseRules = async () => {
     DatabaseService.readDatabaseRules().then((values) => {
