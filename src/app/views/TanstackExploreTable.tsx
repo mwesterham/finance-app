@@ -203,9 +203,9 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
     amount: true,
     transactionId: false,
     source: false,
-    transactionInfo: false,
+    transactionInfo: true,
     category: true,
-    providedDetail: true,
+    providedDetail: false,
   });
   const [sorting, setSorting] = useState([
     { id: "year", desc: true },
