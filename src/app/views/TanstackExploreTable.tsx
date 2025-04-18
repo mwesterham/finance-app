@@ -169,6 +169,20 @@ const orderedTableCols: string[] = [
   'transactionId',
 ];
 
+const getColumnDisplayName = (val: any, colId: string) => {
+  return colId == "month" ? getAbbreviatedMonth(val) : String(val);
+}
+
+const getHierarchy = (row: Row<FinanceSheetRow>): {k: string; v: string;}[] => {
+  const thisElement = {k: prettyPrintString(row.groupingColumnId), v: getColumnDisplayName(row.groupingValue, row.groupingColumnId)};
+  if (!row.getParentRow()) {
+    return [thisElement];
+  }
+  else {
+    return [...getHierarchy(row.getParentRow()), thisElement]
+  }
+}
+
 export interface TanstackExploreTableProps {
 }
 
@@ -345,7 +359,7 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
                                 checked={activeFilterValues?.includes(val as string)}
                                 onChange={() => toggleFilterValue(val as string)}
                               />
-                              <span>{colId == "month" ? getAbbreviatedMonth(val) : String(val)} <span className="text-gray-400 text-xs">({count})</span></span>
+                              <span>{getColumnDisplayName(val, colId)} <span className="text-gray-400 text-xs">({count})</span></span>
                             </label>
                           ))}
                     </div>
@@ -360,97 +374,106 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
     </div>
     <div className="flex flex-col items-center">
       <div className='w-3/4'>
-        
-      <table className="min-w-full border-collapse border border-gray-300">
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => {
-                return (
-                  <th key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder ? null : (
-                      <div className='flex flex-row justify-center'>
-                        {header.column.getIsGrouped() &&
-                          <div className='flex flex-col justify-center px-1'>
-                            <MdOutlinePivotTableChart />
-                          </div>
-                        }
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
-                    )}
-                  </th>
-                )
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => {
-            return (
-              <tr key={row.id}>
-                {row.getVisibleCells().map(cell => {
+
+        <table className="min-w-full border-collapse border border-gray-300">
+          <thead>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => {
                   return (
-                    <td id={cell.id} className={cx(
-                      cell.getIsGrouped() ? "border-2" : "",
-                      cell.getIsAggregated() ? "border-x-2" : "",
-                      cell.getIsPlaceholder() ? "border-4" : "",
-                      !cell.getIsGrouped() && !cell.getIsAggregated() && !cell.getIsPlaceholder() ? "border-y-2" : ""
-                    )}>
-                      {cell.getIsGrouped() ? (
-                        // If it's a grouped cell, add an expander and row count
-                        <>
-                          <button
-                            onClick={row.getToggleExpandedHandler()}
-                            className={cx(row.getCanExpand() ? "pointer" : "normal")}
-                          >
-                            <span className='flex flex-row justify-center text-center p-1'>
-                              <div className='flex flex-col justify-center'>
-                                {row.getIsExpanded() ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}{' '}
-                              </div>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}{' '}
-                            </span>
-                          </button>
-                        </>
-                      ) : cell.getIsAggregated() ? (
-                        // If the cell is aggregated, use the Aggregated
-                        // renderer for cell
-                        flexRender(
-                          cell.column.columnDef.aggregatedCell ??
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
-                      ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
-                        // Otherwise, just render the regular cell
-                        flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
+                    <th key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder ? null : (
+                        <div className='flex flex-row justify-center'>
+                          {header.column.getIsGrouped() &&
+                            <div className='flex flex-col justify-center px-1'>
+                              <MdOutlinePivotTableChart />
+                            </div>
+                          }
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </div>
                       )}
-                    </td>
+                    </th>
                   )
                 })}
               </tr>
-            )
-          })}
-        </tbody>
-        <tfoot>
-          <tr className="bg-gray-200 font-bold">
-            {table.getFooterGroups().map(footerGroup =>
-              footerGroup.headers.map(footer => (
-                <td key={footer.id} className="border-gray-500 p-1">
-                  {footer.isPlaceholder ? null : flexRender(footer.column.columnDef.footer, footer.getContext())}
-                </td>
-              ))
-            )}
-          </tr>
-        </tfoot>
-      </table>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map(row => {
+              return (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map(cell => {
+                    return (
+                      <td id={cell.id} className={cx(
+                        cell.getIsGrouped() ? "border-2" : "",
+                        cell.getIsAggregated() ? "border-x-2" : "",
+                        cell.getIsPlaceholder() ? "border-4" : "",
+                        !cell.getIsGrouped() && !cell.getIsAggregated() && !cell.getIsPlaceholder() ? "border-y-2" : ""
+                      )}>
+                        {cell.getIsGrouped() ? (
+                          // If it's a grouped cell, add an expander and row count
+                          <>
+                            <button
+                              onClick={row.getToggleExpandedHandler()}
+                              className={cx(row.getCanExpand() ? "pointer" : "normal")}
+                            >
+                              <span className='flex flex-row justify-center text-center p-1'>
+                                <div className='flex flex-col justify-center'>
+                                  {row.getIsExpanded() ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}{' '}
+                                </div>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}{' '}
+                              </span>
+                            </button>
+                          </>
+                        ) : cell.getIsAggregated() ? (
+                          // If the cell is aggregated, use the Aggregated
+                          // renderer for cell
+                          <span className='flex flex-row space-x-4'>
+                            <div className={cx(row.getIsExpanded() && cell.getValue() ? "font-bold" : '')}>
+                              {
+                                flexRender(
+                                  cell.column.columnDef.aggregatedCell ??
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )
+                              }
+                            </div>
+                            <div className={cx(row.getIsExpanded() && cell.getValue() ? "" : 'hidden')}>
+                              {getHierarchy(row).map((e) => `${e.v}`).join(" / ")}
+                            </div>
+                          </span>
+                        ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
+                          // Otherwise, just render the regular cell
+                          flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="bg-gray-200 font-bold">
+              {table.getFooterGroups().map(footerGroup =>
+                footerGroup.headers.map(footer => (
+                  <td key={footer.id} className="border-gray-500 p-1">
+                    {footer.isPlaceholder ? null : flexRender(footer.column.columnDef.footer, footer.getContext())}
+                  </td>
+                ))
+              )}
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   </>
