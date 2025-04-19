@@ -23,6 +23,10 @@ import {
   OnUpdateRuleInDatabaseResult,
   GetDistinctValuesOfColumnProps,
   OnGetDistinctValuesOfColumnResult,
+  GetAllExistingDatabasesProps,
+  OnGetAllExistingDatabasesResult,
+  AttachDatabaseProps,
+  OnAttachDatabaseResult,
 } from "../../preload";
 
 export default class DatabaseService {
@@ -182,6 +186,32 @@ export default class DatabaseService {
       };
       window.electronAPI.onGetDistinctValuesOfColumn(handler);
       window.electronAPI.getDistinctValuesOfColumn(props);
+    });
+  }
+
+  static getAllExistingDatabases(
+    props?: GetAllExistingDatabasesProps
+  ): Promise<OnGetAllExistingDatabasesResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnGetAllExistingDatabasesResult) => {
+        window.electronAPI.detachOnGetAllExistingDatabases();
+        resolve(result);
+      };
+      window.electronAPI.onGetAllExistingDatabases(handler);
+      window.electronAPI.getAllExistingDatabases(props);
+    });
+  }
+
+  static attachDatabase(
+    props?: AttachDatabaseProps
+  ): Promise<OnAttachDatabaseResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnAttachDatabaseResult) => {
+        window.electronAPI.detachOnAttachDatabase();
+        resolve(result);
+      };
+      window.electronAPI.onAttachDatabase(handler);
+      window.electronAPI.attachDatabase(props);
     });
   }
 }

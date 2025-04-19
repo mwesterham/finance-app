@@ -104,6 +104,20 @@ export interface OnGetDistinctValuesOfColumnResult extends Result {
   distinctValues: string[];
 }
 
+export interface GetAllExistingDatabasesProps {
+  
+}
+export interface OnGetAllExistingDatabasesResult extends Result {
+  databases: string[];
+}
+
+export interface AttachDatabaseProps {
+  databaseName: string;
+}
+export interface OnAttachDatabaseResult extends Result {
+  success: boolean;
+}
+
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
@@ -164,6 +178,16 @@ const electronAPI = {
   onGetDistinctValuesOfColumn: (callback: (event: any, values: OnGetDistinctValuesOfColumnResult) => void) => 
     ipcRenderer.on('onGetDistinctValuesOfColumn', callback),
   detachOnGetDistinctValuesOfColumn: () => ipcRenderer.removeAllListeners('onGetDistinctValuesOfColumn'),
+
+  getAllExistingDatabases: async (props?: GetAllExistingDatabasesProps) => ipcRenderer.send('getAllExistingDatabases', props),
+  onGetAllExistingDatabases: (callback: (event: any, values: OnGetAllExistingDatabasesResult) => void) => 
+    ipcRenderer.on('getAllExistingDatabases', callback),
+  detachOnGetAllExistingDatabases: () => ipcRenderer.removeAllListeners('getAllExistingDatabases'),
+
+  attachDatabase: async (props?: AttachDatabaseProps) => ipcRenderer.send('attachDatabase', props),
+  onAttachDatabase: (callback: (event: any, values: OnAttachDatabaseResult) => void) => 
+    ipcRenderer.on('attachDatabase', callback),
+  detachOnAttachDatabase: () => ipcRenderer.removeAllListeners('attachDatabase'),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

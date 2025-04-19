@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { FinanceSheetRow } from "../db/WesterhamDatabase";
 import MultiFileUploader from "./views/MultiFileUploader";
 import { TanstackDataTable } from "./views/TanstackDatatable";
@@ -7,8 +7,14 @@ import { prettyPrintString } from "./util/util";
 import DatabaseService from "./util/DatabaseService";
 import { RuleBasedCategorizer } from "./views/RuleBasedCategorizer";
 import { RuleManager } from "./views/RuleManager";
+import { DatabaseManager } from "./components/DatabaseManager";
 
 const App = () => {
+  const [version, setVersion] = useState(0);
+
+  const forceRerender = () => {
+    setVersion((v) => v + 1);
+  };
   useEffect(() => {
     DatabaseService.getDbLocalPath().then((r) => console.log(r));
   }, []);
@@ -17,7 +23,11 @@ const App = () => {
 
   return (
     <div className="p-4 space-y-4">
-      {/* Tab Navigation */}
+      <div>
+        <DatabaseManager onSelect={() => {
+          forceRerender();
+        }}/>
+      </div>
       <div className="mb-4 flex border-b">
         {["pivotTable", "tanstackTable", "fillTable", "ruleManager", "multiFileUploader"].map((tab) => (
           <button
@@ -30,11 +40,11 @@ const App = () => {
         ))}
       </div>
 
-      {activeTab === "pivotTable" && <TanstackExploreTable />}
-      {activeTab === "multiFileUploader" && <MultiFileUploader />}
-      {activeTab === "fillTable" && <RuleBasedCategorizer />}
-      {activeTab === "ruleManager" && <RuleManager />}
-      {activeTab === "tanstackTable" && <TanstackDataTable />}
+      {activeTab === "pivotTable" && <TanstackExploreTable key={version} />}
+      {activeTab === "multiFileUploader" && <MultiFileUploader key={version} />}
+      {activeTab === "fillTable" && <RuleBasedCategorizer key={version} />}
+      {activeTab === "ruleManager" && <RuleManager key={version} />}
+      {activeTab === "tanstackTable" && <TanstackDataTable key={version} />}
     </div>
   );
 };

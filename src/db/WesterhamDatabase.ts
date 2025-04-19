@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 
-export enum WesterhamDatabaseEnum {
-  MATTHEW = 'matthew.db'
+export enum DatabaseName {
+  DEFAULT = "default.db"
 }
 
 export interface FinanceSheetRow {
