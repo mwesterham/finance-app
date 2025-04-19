@@ -100,8 +100,8 @@ const columns = [
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
     cell: info => epochToDateStr(info.getValue()),
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    header: ({ column }) => <span>{"Date"}</span>,
+    footer: ({ column }) => <span>{"Date"}</span>,
     meta: {
       filterVariant: 'daterange',
     },

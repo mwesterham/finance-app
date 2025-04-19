@@ -87,8 +87,8 @@ const columns = [
         />
       </>;
     },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+    header: ({ column }) => <span>{"Date"}</span>,
+    footer: ({ column }) => <span>{"Date"}</span>,
     meta: {
       filterVariant: 'daterange',
     },
