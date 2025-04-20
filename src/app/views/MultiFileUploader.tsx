@@ -7,6 +7,7 @@ import MatthewCreditSnapshotParser from "../util/parser/MatthewCreditSnapshotPar
 import MatthewVenmoSnapshotParser from "../util/parser/MatthewVenmoSnapshotParser";
 import DatabaseService from "../util/DatabaseService";
 import DiscoverParser from "../util/parser/DiscoverParser";
+import ExportParser from "../util/parser/ExportParser";
 
 export interface LabeledFile {
   file: File;
@@ -21,6 +22,7 @@ export enum InputFileLabel {
   MATTHEW_SNAPSHOT_CREDIT = "Wells Fargo Credit Snapshot",
   MATTHEW_SNAPSHOT_VENMO = "Venmo Snapshot",
   DISCOVER = "Discover",
+  EXPORT = "Exported",
 }
 
 interface MultiFileUploaderProps {
@@ -34,6 +36,7 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
   const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
   const discoverParser = new DiscoverParser();
+  const exportParser = new ExportParser();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
@@ -108,6 +111,11 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           await DatabaseService.writeRowToDatabaseIfMissing({ rows });
           break;
         }
+        case InputFileLabel.EXPORT: {
+          const rows = exportParser.toFinanceRows(text);
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
         default: {
           console.log(`Invalid label ${label}`)
         }
@@ -132,6 +140,8 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
       return InputFileLabel.VENMO;
     } else if (fileName.toLowerCase().includes("discover")) {
       return InputFileLabel.DISCOVER;
+    } else if (fileName.toLowerCase().includes("finance_app-transactions")) {
+      return InputFileLabel.EXPORT;
     } else {
       return InputFileLabel.WELLS_FARGO_CHECKING;
     }

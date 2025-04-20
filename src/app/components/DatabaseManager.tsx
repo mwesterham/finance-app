@@ -68,7 +68,7 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-rules.csv`);
+    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-finance_app-rules.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -107,7 +107,7 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-transactions.csv`);
+    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-finance_app-transactions.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
