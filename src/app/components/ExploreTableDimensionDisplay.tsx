@@ -2,7 +2,7 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { ItemType } from "./DraggableList";
 import { GroupingState, Table, VisibilityState } from "@tanstack/react-table";
 import { FinanceSheetRow } from "../../db/WesterhamDatabase";
-import { getColumnDisplayName, prettyPrintString } from "../util/util";
+import { cx, getColumnDisplayName, prettyPrintString } from "../util/util";
 import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
 import { IoFilterCircleOutline } from 'react-icons/io5';
 import { MdFilterList } from "react-icons/md";
@@ -24,6 +24,7 @@ const ExploreTableDimensionDisplay = (props: ExploreTableDimensionDisplayProps) 
   const allValues: string[] = [];
   
   const [filterDropdownCol, setFilterDropdownCol] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -89,17 +90,29 @@ const ExploreTableDimensionDisplay = (props: ExploreTableDimensionDisplayProps) 
       </div>
 
       {filterDropdownCol === colId && (
-        <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border w-48 max-h-64 overflow-auto">
-          <div className="flex justify-between gap-2 mb-2 text-sm">
-            <button onClick={selectAll} className="text-blue-600 hover:underline">Select All</button>
-            <button onClick={unselectAll} className="text-red-600 hover:underline">Unselect All</button>
-          </div>
+        <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border max-h-96 overflow-auto">
+          <span className="flex flex-col">
+            <div className="flex justify-between gap-2 mb-2 text-sm">
+              <button onClick={selectAll} className="text-blue-600 hover:underline">Select All</button>
+              <button onClick={unselectAll} className="text-red-600 hover:underline">Unselect All</button>
+            </div>
+            <div className="py-2">
+              <input
+                type={"text"}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="border rounded px-2 py-1"
+              />
+            </div>
+          </span>
           <div className="flex flex-col gap-1 max-h-48 overflow-y-auto text-sm">
             {valuesMap &&
               Array.from(valuesMap.entries())
                 .sort()
                 .map(([val, count]) => (
-                  <label key={val} className="flex items-center gap-2">
+                  <label key={val} className={cx(
+                    "flex items-center gap-2", 
+                    inputValue != null && inputValue.length != 0 && !getColumnDisplayName(val, colId).toLowerCase().includes(inputValue.toLowerCase()) ? "hidden" : ""
+                    )}>
                     <input
                       type="checkbox"
                       checked={activeFilterValues?.includes(val as string)}
