@@ -1,5 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
-import { FinanceSheetRow } from "../db/WesterhamDatabase";
+import { useEffect, useState } from "react";
 import MultiFileUploader from "./views/MultiFileUploader";
 import { TanstackDataTable } from "./views/TanstackDatatable";
 import { TanstackExploreTable } from "./views/TanstackExploreTable";

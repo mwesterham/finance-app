@@ -6,6 +6,7 @@ import MatthewCheckingSnapshotParser from "../util/parser/MatthewCheckingSnapsho
 import MatthewCreditSnapshotParser from "../util/parser/MatthewCreditSnapshotParser";
 import MatthewVenmoSnapshotParser from "../util/parser/MatthewVenmoSnapshotParser";
 import DatabaseService from "../util/DatabaseService";
+import DiscoverParser from "../util/parser/DiscoverParser";
 
 export interface LabeledFile {
   file: File;
@@ -19,6 +20,7 @@ export enum InputFileLabel {
   MATTHEW_SNAPSHOT_CHECKING = "Wells Fargo Checking Snapshot",
   MATTHEW_SNAPSHOT_CREDIT = "Wells Fargo Credit Snapshot",
   MATTHEW_SNAPSHOT_VENMO = "Venmo Snapshot",
+  DISCOVER = "Discover",
 }
 
 interface MultiFileUploaderProps {
@@ -31,6 +33,7 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   const matthewCheckingSnapshotParser = new MatthewCheckingSnapshotParser();
   const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
   const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
+  const discoverParser = new DiscoverParser();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
@@ -100,6 +103,11 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           await DatabaseService.writeRowToDatabaseIfMissing({ rows });
           break;
         }
+        case InputFileLabel.DISCOVER: {
+          const rows = discoverParser.toFinanceRows(text);
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+          break;
+        }
         default: {
           console.log(`Invalid label ${label}`)
         }
@@ -122,6 +130,8 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
       return InputFileLabel.WELLS_FARGO_CREDIT;
     } else if (fileName.toLowerCase().includes("venmo")) {
       return InputFileLabel.VENMO;
+    } else if (fileName.toLowerCase().includes("discover")) {
+      return InputFileLabel.DISCOVER;
     } else {
       return InputFileLabel.WELLS_FARGO_CHECKING;
     }

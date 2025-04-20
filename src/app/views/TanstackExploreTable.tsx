@@ -21,6 +21,7 @@ import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
 import { IoFilterCircleOutline } from 'react-icons/io5';
 import DatabaseService from "../util/DatabaseService";
+import { RowVisualizer } from '../components/RowVisualizer';
 
 const multiSelectFilter = (row: Row<FinanceSheetRow>, columnId: string, filterValue: string[]) => {
   if (!filterValue?.length) return false; // Show none if no filters
@@ -281,6 +282,12 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
     onGroupingChange: setGrouping,
   });
 
+  const [visualizeRows, setVisualizeRows] = useState(table.getFilteredRowModel().rows.map(r => r.original));
+
+  useEffect(() => {
+    setVisualizeRows(table.getFilteredRowModel().rows.map(r => r.original));
+  }, [table.getFilteredRowModel()])
+
   return (<>
     <div className="flex flex-col items-center">
       <div className='w-1/2'>
@@ -476,6 +483,12 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
         </table>
       </div>
     </div>
+    {visualizeRows.length > 0 && 
+      <RowVisualizer
+        rows={visualizeRows}
+        pivotKey="category"
+      />
+    }
   </>
   );
 };

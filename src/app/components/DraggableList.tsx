@@ -64,9 +64,9 @@ const ListSortableContext = ({ items, id, title, render }: { items: ItemType[], 
           <div className="flex items-center justify-center text-xl font-semibold mb-4">{title}</div>
           <div className="flex flex-row justify-center">
             <div className="flex flex-col justify-center">
-              {items.map((item) => {
+              {items.map((item, idx) => {
                 return <>
-                  <div className="">
+                  <div className="" key={idx}>
                     <SortableItem key={item.id} item={item} render={render} />
                   </div>
                 </>
