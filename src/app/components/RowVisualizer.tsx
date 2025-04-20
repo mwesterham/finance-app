@@ -1,15 +1,6 @@
 import { Chart, AxisOptions } from "react-charts";
 import { useMemo } from "react";
-
-export interface FinanceSheetRow {
-  transactionId?: string;
-  epoch: number;
-  amount: number;
-  source: string;
-  transactionInfo: string;
-  category?: string;
-  providedDetail?: string;
-}
+import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 
 type Datum = { 
   primary: Date; 

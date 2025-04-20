@@ -1,4 +1,5 @@
 import { Column } from "@tanstack/react-table";
+import { getAbbreviatedMonth } from "./time";
 
 export const cleanNumber = (str: string): number => {
   return parseFloat(str.replace(/[^0-9.-]/g, "").trim());
@@ -50,3 +51,7 @@ export const formatAmount = (amount: number) => {
 
   return amount < 0 ? `($${formattedNumber})` : `$${formattedNumber}`;
 };
+
+export const getColumnDisplayName = (val: any, colId: string) => {
+  return colId == "month" ? getAbbreviatedMonth(val) : String(val);
+}

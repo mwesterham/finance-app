@@ -12,16 +12,16 @@ import {
 } from '@tanstack/react-table';
 import { getFacetedUniqueValues, GroupingState, Row } from "@tanstack/table-core";
 import { FinanceSheetRow } from '../../db/WesterhamDatabase';
-import { useEffect, useRef, useState } from 'react';
-import { cx, formatAmount, prettyPrintString } from '../util/util';
+import { useEffect, useState } from 'react';
+import { cx, formatAmount, getColumnDisplayName, prettyPrintString } from '../util/util';
 import { getAbbreviatedMonth } from '../util/time';
 import DraggableList, { ItemType } from '../components/DraggableList';
-import { MdFilterList, MdOutlinePivotTableChart } from "react-icons/md";
+import { MdOutlinePivotTableChart } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
-import { FaRegCircle, FaRegDotCircle } from "react-icons/fa";
-import { IoFilterCircleOutline } from 'react-icons/io5';
 import DatabaseService from "../util/DatabaseService";
 import { RowVisualizer } from '../components/RowVisualizer';
+import ExploreTableDimensionDisplay from '../components/ExploreTableDimensionDisplay';
+import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 
 const multiSelectFilter = (row: Row<FinanceSheetRow>, columnId: string, filterValue: string[]) => {
   if (!filterValue?.length) return false; // Show none if no filters
@@ -170,10 +170,6 @@ const orderedTableCols: string[] = [
   'transactionId',
 ];
 
-const getColumnDisplayName = (val: any, colId: string) => {
-  return colId == "month" ? getAbbreviatedMonth(val) : String(val);
-}
-
 const getHierarchy = (row: Row<FinanceSheetRow>): {k: string; v: string;}[] => {
   const thisElement = {k: prettyPrintString(row.groupingColumnId), v: getColumnDisplayName(row.groupingValue, row.groupingColumnId)};
   if (!row.getParentRow()) {
@@ -217,20 +213,6 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   );
-
-  const [filterDropdownCol, setFilterDropdownCol] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setFilterDropdownCol(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const toggleVisibility = (col: string, override?: boolean) => {
     const originalColVisibility = columnVisibility[col];
@@ -292,89 +274,16 @@ export const TanstackExploreTable = (props: TanstackExploreTableProps) => {
     <div className="flex flex-col items-center">
       <div className='w-1/2'>
         <DraggableList selectedItems={initialSelectedItems} availableItems={initialAvailableItems} onDragEndCallback={onDragEndCallback}
-          renderItem={(item, listeners) => {
-            const colId = item.text;
-            const isGrouped = grouping.includes(colId);
-            const valuesMap = table.getColumn(colId)?.getFacetedUniqueValues();
-            const allValues: string[] = [];
-
-            if (valuesMap) {
-              for (const [val] of valuesMap.entries()) {
-                const value = val === null || val === undefined ? null : val;
-                allValues.push(value);
-              }
-            }
-            const activeFilterValues =
-              (table.getColumn(colId)?.getFilterValue() as string[] | undefined) ?? allValues;
-
-            const toggleFilterValue = (value: string) => {
-              const current = new Set(activeFilterValues);
-              if (current.has(value)) {
-                current.delete(value);
-              } else {
-                current.add(value);
-              }
-              table.getColumn(colId)?.setFilterValue(Array.from(current));
-            };
-
-            const selectAll = () => {
-              if (valuesMap) {
-                table.getColumn(colId)?.setFilterValue(Array.from(valuesMap.keys()));
-              }
-            };
-
-            const unselectAll = () => {
-              table.getColumn(colId)?.setFilterValue([]);
-            };
-
-            return (
-              <div className="p-1 justify-between text-center min-w-24 relative">
-                <div className="flex flex-row bg-blue-500 text-white rounded-lg cursor-grab shadow-md">
-                  <div {...listeners} className="flex flex-grow p-1 pl-4">
-                    {prettyPrintString(item.text)}
-                  </div>
-                  {!isGrouped && (
-                    <>
-                      <button className="p-1" onClick={() => onColToggleCallback(colId)}>
-                        {columnVisibility[colId] === false ? <FaRegCircle /> : <FaRegDotCircle />}
-                      </button>
-                    </>
-                  )}
-
-                  <button className="p-1 flex flex-row" onClick={() => setFilterDropdownCol(filterDropdownCol === colId ? null : colId)}>
-                    {allValues.length == activeFilterValues.length ?
-                      <span className='p-1'><MdFilterList /></span> :
-                      <span><IoFilterCircleOutline size={24} /></span>
-                    }
-                  </button>
-                </div>
-
-                {filterDropdownCol === colId && (
-                  <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border w-48 max-h-64 overflow-auto">
-                    <div className="flex justify-between gap-2 mb-2 text-sm">
-                      <button onClick={selectAll} className="text-blue-600 hover:underline">Select All</button>
-                      <button onClick={unselectAll} className="text-red-600 hover:underline">Unselect All</button>
-                    </div>
-                    <div className="flex flex-col gap-1 max-h-48 overflow-y-auto text-sm">
-                      {valuesMap &&
-                        Array.from(valuesMap.entries())
-                          .sort()
-                          .map(([val, count]) => (
-                            <label key={val} className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={activeFilterValues?.includes(val as string)}
-                                onChange={() => toggleFilterValue(val as string)}
-                              />
-                              <span>{getColumnDisplayName(val, colId)} <span className="text-gray-400 text-xs">({count})</span></span>
-                            </label>
-                          ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          }}
+          renderItem={(item: ItemType, listeners: SyntheticListenerMap) => <>
+            <ExploreTableDimensionDisplay 
+              item={item}
+              listeners={listeners}
+              grouping={grouping}
+              table={table}
+              columnVisibility={columnVisibility}
+              onColToggleCallback={onColToggleCallback}
+            />
+          </>}
         />
         {/** End of draggable list */}
       </div>
