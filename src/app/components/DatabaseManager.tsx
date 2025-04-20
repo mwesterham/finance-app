@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import DatabaseService from "../util/DatabaseService";
+import { FinanceSheetRow, Rule } from "../../db/WesterhamDatabase";
 
 interface DatabaseManagerProps {
   onSelect: (option: string) => void;
+}
+
+const getBaseDbName = (db: string) => {
+  return db.split(".")[0];
 }
 
 export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
@@ -31,50 +36,137 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
   };
 
   const handleCreate = async () => {
-    if (!newDbName.endsWith(".db")) {
-      // alert("Database name must end with .db");
-      return;
-    }
+    if (!newDbName.endsWith(".db")) return;
     await DatabaseService.attachDatabase({ databaseName: newDbName });
     setSelectedPath(newDbName);
     setNewDbName("");
     onSelect(newDbName);
   };
 
+  const handleExportRules = async () => {
+    const rowsResult = await DatabaseService.readDatabaseRules();
+    const rows: Rule[] = rowsResult.rules;
+
+    if (!rows.length) return;
+
+    // Step 1: Convert to CSV
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","), // header row
+      ...rows.map(row =>
+        headers.map(header => {
+          let val = (row as any)[header];
+          if (val == null) return ""; // handle nulls/undefined
+          const escaped = String(val).replace(/"/g, '""'); // escape quotes
+          return `"${escaped}"`; // wrap in quotes for CSV
+        }).join(",")
+      ),
+    ].join("\n");
+
+    // Step 2: Trigger file download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-rules.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url); // cleanup
+  };
+
+  const handleExportTransactions = async () => {
+    const rowsResult = await DatabaseService.readDatabaseRows();
+    const rows: FinanceSheetRow[] = rowsResult.rows;
+
+    if (!rows.length) return;
+
+    // Step 1: Convert to CSV
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","), // header row
+      ...rows.map(row =>
+        headers.map(header => {
+          let val = (row as any)[header];
+          if (val == null) return ""; // handle nulls/undefined
+
+          // Format epoch field
+          if (header === "epoch") {
+            const date = new Date(val);
+            val = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+          }
+
+          const escaped = String(val).replace(/"/g, '""'); // escape quotes
+          return `"${escaped}"`; // wrap in quotes for CSV
+        }).join(",")
+      ),
+    ].join("\n");
+
+    // Step 2: Trigger file download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-transactions.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url); // cleanup
+  };
+
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <div className="w-full max-w-sm">
-        <label className="block text-sm font-medium mb-1">Select a database</label>
-        <select
-          value={selectedPath}
-          onChange={handleChange}
-          className="w-full border px-3 py-2 rounded"
-        >
-          {databases.map((db) => (
-            <option key={db} value={db}>
-              {db}
-            </option>
-          ))}
-        </select>
+    <div className="flex flex-wrap justify-between items-end gap-4">
+      {/* LHS: Inputs */}
+      <div className="flex flex-wrap gap-4 flex-grow max-w-[calc(100%-12rem)]">
+        <div className="w-full max-w-sm">
+          <label className="block text-sm font-medium mb-1">Select a database</label>
+          <select
+            value={selectedPath}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+          >
+            {databases.map((db) => (
+              <option key={db} value={db}>
+                {db}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-full max-w-sm">
+          <label className="block text-sm font-medium mb-1">Create new database</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="example.db"
+              value={newDbName}
+              onChange={(e) => setNewDbName(e.target.value)}
+              className="w-full border px-3 py-2 rounded"
+            />
+            <button
+              onClick={handleCreate}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Create
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-sm">
-        <label className="block text-sm font-medium mb-1">Create new database</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="example.db"
-            value={newDbName}
-            onChange={(e) => setNewDbName(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
-          <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Create
-          </button>
-        </div>
+      {/* RHS: Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleExportTransactions}
+          className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700"
+        >
+          Export Transactions
+        </button>
+        <button
+          onClick={handleExportRules}
+          className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700"
+        >
+          Export Rules Table
+        </button>
       </div>
     </div>
   );
