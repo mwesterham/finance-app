@@ -49,53 +49,19 @@ declare module '@tanstack/react-table' {
   }
 }
 
-const CATEGORIES = [
-  "01 - Deposit",
-  "02 - Education",
-  "03 - Music",
-  "04 - Utilities",
-  "05 - Cellphone",
-  "06 - Home",
-  "07 - Mortgage",
-  "08 - Transfer",
-  "09 - Tax",
-  "10 - Donation",
-  "11 - Medical",
-  "12 - ATM",
-  "13 - CC Payment",
-  "14 - Misc Exp",
-  "15 - Groceries",
-  "16 - Restaurant",
-  "17 - Auto",
-  "18 - Entertainment",
-  "19 - Fitness",
-  "20 - Haircut",
-  "21 - Clothes",
-  "22 - Travel",
-  "23 - Internet",
-  "24 - Gift",
-  "25 - Investments",
-  "26 - Insurance",
-  "27 - Venmo Transfer",
-  "28 - Donation",
-  "29 - Electronics",
-  "30 - Fraud",
-  "31 - Subscription",
-  "32 - Balance Transfer",
-  "33 - Restringing Payment"
-];
-
 const updateRule = async (ruleId: string, rule: Rule) => {
   const result = await DatabaseService.updateRuleInDatabase({
     ruleId,
     rule,
   });
-  console.log(result);
 };
 
 const columnHelper = createColumnHelper<Rule>();
 
-const columns = [
+const getColumns = (
+  suggestedCategories: string[], 
+  providedDetailOptions: string[]
+) => [
   columnHelper.accessor('matchingExpression', {
     cell: ({ getValue, row, column, table }) => {
       const value = getValue();
@@ -154,7 +120,7 @@ const columns = [
           value={value}
           type="text"
           displayBody={<>{value}</>}
-          suggestions={CATEGORIES}
+          suggestions={suggestedCategories}
           onChange={onChange}
         />
       </>;
@@ -194,6 +160,7 @@ const columns = [
         <EditableInput
           value={value}
           type="text"
+          suggestions={providedDetailOptions}
           displayBody={<>{value}</>}
           onChange={onChange}
         />
@@ -299,10 +266,26 @@ export const RuleManager = (props: RuleManagerProps) => {
   const [ruleData, setRuleData] = useState<Rule[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [deletedRows, setDeletedRows] = useState<number[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [providedDetailOptions, setProvidedDetailOptions] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDatabaseRules();
+    populateOptions();
   }, []);
+
+  const populateOptions = async () => {
+    const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "finance_sheet",
+      column: "category"
+    });
+    const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "finance_sheet",
+      column: "provided_detail"
+    })
+    setCategoryOptions(categoriesResult.distinctValues.sort());
+    setProvidedDetailOptions(detailsResult.distinctValues.sort());
+  }
 
   const fetchDatabaseRules = async () => {
     DatabaseService.readDatabaseRules().then((values) => {
@@ -315,7 +298,6 @@ export const RuleManager = (props: RuleManagerProps) => {
       console.log("Deleting rule with ID:", ruleId);
       setTimeout(async () => {
         const result = await DatabaseService.deleteRuleFromDatabase({ ruleId });
-        console.log(result);
         setDeletedRows([]);
         fetchDatabaseRules();
       }, 1000);
@@ -336,7 +318,7 @@ export const RuleManager = (props: RuleManagerProps) => {
 
   const table = useReactTable({
     data: ruleData,
-    columns,
+    columns: getColumns(categoryOptions, providedDetailOptions),
     state: { columnSizing, sorting, columnVisibility, columnFilters },
     initialState: { pagination: { pageSize: 20 } },
     getCoreRowModel: getCoreRowModel(),
@@ -489,7 +471,6 @@ export const RuleManager = (props: RuleManagerProps) => {
                 fetchDatabaseRules();
               }}
               onCancel={() => setShowModal(false)}
-              categories={CATEGORIES}
             />
 
           </div>

@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-table';
 import { filterFns } from "@tanstack/table-core";
 import { FinanceSheetRow, Rule } from '../../db/WesterhamDatabase';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
 import {
   MdKeyboardDoubleArrowRight,
@@ -22,18 +22,14 @@ import {
   MdKeyboardArrowLeft,
   MdAssignmentAdd
 } from "react-icons/md";
-import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
+import { cx, formatAmount, prettyPrintString } from '../util/util';
 import EditableInput from '../components/EditableInput';
-import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
-import TransactionDetails from '../components/TransactionDetails';
-import { customFormatDate, epochToDateStr } from '../util/time';
+import { epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
-import RuleDetails from '../components/RuleDetails';
 import { RuleForm } from '../components/RuleForm';
 
 
@@ -49,42 +45,6 @@ declare module '@tanstack/react-table' {
   }
 }
 
-const CATEGORIES = [
-  "01 - Deposit",
-  "02 - Education",
-  "03 - Music",
-  "04 - Utilities",
-  "05 - Cellphone",
-  "06 - Home",
-  "07 - Mortgage",
-  "08 - Transfer",
-  "09 - Tax",
-  "10 - Donation",
-  "11 - Medical",
-  "12 - ATM",
-  "13 - CC Payment",
-  "14 - Misc Exp",
-  "15 - Groceries",
-  "16 - Restaurant",
-  "17 - Auto",
-  "18 - Entertainment",
-  "19 - Fitness",
-  "20 - Haircut",
-  "21 - Clothes",
-  "22 - Travel",
-  "23 - Internet",
-  "24 - Gift",
-  "25 - Investments",
-  "26 - Insurance",
-  "27 - Venmo Transfer",
-  "28 - Donation",
-  "29 - Electronics",
-  "30 - Fraud",
-  "31 - Subscription",
-  "32 - Balance Transfer",
-  "33 - Restringing Payment"
-];
-
 const ruleFromFinanceRow = (row: FinanceSheetRow) => {
   return {
     ruleId: "N/A",
@@ -96,7 +56,10 @@ const ruleFromFinanceRow = (row: FinanceSheetRow) => {
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
 
-const columns = [
+const getColumns = (
+  suggestedCategories: string[], 
+  providedDetailOptions: string[]
+) => [
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
     cell: info => epochToDateStr(info.getValue()),
@@ -134,7 +97,7 @@ const columns = [
           value={value}
           type="text"
           displayBody={<>{value}</>}
-          suggestions={CATEGORIES}
+          suggestions={suggestedCategories}
           onChange={onChange}
         />
       </>;
@@ -170,6 +133,7 @@ const columns = [
         <EditableInput
           value={value}
           type="text"
+          suggestions={providedDetailOptions}
           displayBody={<>{value}</>}
           onChange={onChange}
         />
@@ -213,12 +177,27 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
   const [rowData, setRowData] = useState<FinanceSheetRow[]>([]);
   const [rules, setRules] = useState<Rule[]>([]);
   const [ruleToShow, setRuleToShow] = useState<Rule>(null);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [providedDetailOptions, setProvidedDetailOptions] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDatabaseRows();
     fetchDatabaseRules();
+    populateOptions();  
   }, []);
-
+  
+  const populateOptions = async () => {
+    const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "finance_sheet",
+      column: "category"
+    });
+    const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "finance_sheet",
+      column: "provided_detail"
+    })
+    setCategoryOptions(categoriesResult.distinctValues.sort());
+    setProvidedDetailOptions(detailsResult.distinctValues.sort());
+  }
 
   const updateRows = async () => {
     rowData.forEach(async (row: FinanceSheetRow) => {
@@ -227,7 +206,6 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
           transactionId: row.transactionId,
           row,
         });
-        console.log(result);
       }
     })
   };
@@ -251,7 +229,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
 
   const fetchDatabaseRows = async () => {
     DatabaseService.readEmptyCategoryDatabaseRows().then((values) => {
-      console.log("Database rinance rows read result length:", values.rows.length);
+      console.log("Database finance rows read result length:", values.rows.length);
       setRowData(values.rows);
     });
   };
@@ -277,7 +255,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
 
   const table = useReactTable({
     data: rowData,
-    columns,
+    columns: getColumns(categoryOptions, providedDetailOptions),
     state: { columnSizing, sorting, columnVisibility, columnFilters },
     initialState: { pagination: { pageSize: 20 } },
     getCoreRowModel: getCoreRowModel(),
@@ -433,7 +411,6 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
               fetchDatabaseRules();
             }}
             onCancel={() => setRuleToShow(null)}
-            categories={CATEGORIES}
           />
         </div>
       </div>
