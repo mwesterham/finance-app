@@ -11,26 +11,37 @@ function groupFinanceData(
   rowData: FinanceSheetRow[],
   pivotKey: keyof FinanceSheetRow
 ) {
-  const grouped = rowData.reduce((acc, row) => {
-    const key = row[pivotKey] ?? "Uncategorized";
+  const grouped = new Map<string, Map<number, Datum>>();
+
+  for (const row of rowData) {
+    const key = String(row[pivotKey] ?? "Uncategorized");
+
     const date = new Date(row.epoch);
-    const primary = date;
-    if (!acc[key]) {
-      acc[key] = [];
+    date.setUTCDate(1);         // first of the month
+    date.setUTCHours(0, 0, 0, 0); // reset time to midnight UTC
+    const timestamp = date.getTime();
+
+    if (!grouped.has(key)) {
+      grouped.set(key, new Map());
     }
 
-    const element = acc[key].find(e => e.primary == primary);
-    if (element == undefined) {
-      acc[key].push({ primary: primary, secondary: row.amount });
-    }
-    else {
-      element.secondary += row.amount;
-    }
-    return acc;
-  }, {} as Record<string, Datum[]>);
+    const groupMap = grouped.get(key)!;
+    const existing = groupMap.get(timestamp);
 
-  return Object.entries(grouped).map(([label, data]) => ({ label, data }));
+    if (existing) {
+      existing.secondary += row.amount;
+    } else {
+      groupMap.set(timestamp, { primary: new Date(timestamp), secondary: row.amount });
+    }
+  }
+
+  const items = Array.from(grouped.entries()).map(([label, map]) => ({
+    label,
+    data: Array.from(map.values()).sort((a, b) => a.primary.getTime() - b.primary.getTime()),
+  }));
+  return items;
 }
+
 
 interface RowVisualizerProps {
   rows: FinanceSheetRow[];
@@ -43,22 +54,21 @@ export const RowVisualizer = ({ rows, pivotKey = "category", }: RowVisualizerPro
   const primaryAxis = useMemo<AxisOptions<any>>(
       () => ({
         getValue: (datum) => datum.primary,
-        scaleType: "linear",
-        elementType: "bar",
+        scaleType: "time",
       }),
       []
     );
   
-    const secondaryAxes = useMemo<AxisOptions<any>[]>(
-      () => [
-        {
-          getValue: (datum) => datum.secondary,
-          scaleType: "linear",
-          elementType: "line",
-        },
-      ],
-      []
-    );
+  const secondaryAxes = useMemo<AxisOptions<any>[]>(
+    () => [
+      {
+        getValue: (datum) => datum.secondary,
+        scaleType: "linear",
+        elementType: "line",
+      },
+    ],
+    []
+  );
 
   return (
     <div className="w-full h-96">
