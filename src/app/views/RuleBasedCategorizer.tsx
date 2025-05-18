@@ -25,7 +25,7 @@ import {
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, prettyPrintString } from '../util/util';
+import { cx, formatAmount, prettyPrintString, ruleFromFinanceRow } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import WithTooltip from '../components/WithTooltip';
 import { epochToDateStr } from '../util/time';
@@ -43,15 +43,6 @@ declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     updateData: (rowIndex: number, columnId: string, value: unknown) => void
   }
-}
-
-const ruleFromFinanceRow = (row: FinanceSheetRow) => {
-  return {
-    ruleId: "N/A",
-    matchingExpression: row.transactionInfo,
-    category: row.category,
-    providedDetail: row.providedDetail,
-  } as Rule;
 }
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
@@ -346,7 +337,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                   <span className="flex flex-grow items-center justify-center space-x-2">
                     <WithTooltip text='Create Rule' position='left'>
                       <MdAssignmentAdd
-                        className="text-blue-500 cursor-pointer hover:text-blue-700 min-w-5 min-h-5"
+                        className="text-blue-300 cursor-pointer hover:text-blue-700 min-w-5 min-h-5"
                         onClick={() => setRuleToShow(ruleFromFinanceRow(row.original))}
                       />
                     </WithTooltip>

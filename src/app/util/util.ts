@@ -1,5 +1,7 @@
 import { Column } from "@tanstack/react-table";
 import { getAbbreviatedMonth } from "./time";
+import { FinanceSheetRow } from "../../db/WesterhamDatabase";
+import { Rule } from "../../db/WesterhamDatabase";
 
 export const cleanNumber = (str: string): number => {
   return parseFloat(str.replace(/[^0-9.-]/g, "").trim());
@@ -54,4 +56,13 @@ export const formatAmount = (amount: number) => {
 
 export const getColumnDisplayName = (val: any, colId: string) => {
   return colId == "month" ? getAbbreviatedMonth(val) : String(val);
+}
+
+export const ruleFromFinanceRow = (row: FinanceSheetRow) => {
+  return {
+    ruleId: "N/A",
+    matchingExpression: row.transactionInfo,
+    category: row.category,
+    providedDetail: row.providedDetail,
+  } as Rule;
 }

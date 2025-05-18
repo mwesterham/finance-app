@@ -12,7 +12,7 @@ import {
   getFilteredRowModel
 } from '@tanstack/react-table';
 import { filterFns } from "@tanstack/table-core";
-import { FinanceSheetRow } from '../../db/WesterhamDatabase';
+import { FinanceSheetRow, Rule } from '../../db/WesterhamDatabase';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
 import {
@@ -20,19 +20,21 @@ import {
   MdKeyboardDoubleArrowRight,
   MdKeyboardDoubleArrowLeft,
   MdKeyboardArrowRight,
-  MdKeyboardArrowLeft
+  MdKeyboardArrowLeft,
+  MdAssignmentAdd
 } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
+import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString, ruleFromFinanceRow } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
 import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
+import { RuleForm } from '../components/RuleForm';
 
 
 declare module '@tanstack/react-table' {
@@ -287,6 +289,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
   const [rowData, setRowData] = useState<FinanceSheetRow[]>([]);
   const [highlightedRow, setHighlightedRows] = useState<number[]>([]);
   const [deletedRows, setDeletedRows] = useState<number[]>([]);
+  const [ruleToShow, setRuleToShow] = useState<Rule>(null);
 
   useEffect(() => {
     fetchDatabaseRows();
@@ -413,7 +416,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
               >
                 <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
                   <span className="flex flex-grow items-center justify-center space-x-2">
-                    <WithTooltip text='Delete' position='top'>
+                    <WithTooltip text='Delete' position='left'>
                       <ConfirmAction
                         onConfirm={() => deleteRow(Number(row.original.transactionId))}
                         title={`Delete transaction forever?`}
@@ -436,6 +439,13 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
                           className="text-blue-300 cursor-pointer hover:text-blue-700 min-w-3 min-h-3"
                         />
                       </ConfirmAction>
+                    </WithTooltip>
+
+                    <WithTooltip text='Create Rule' position='right'>
+                      <MdAssignmentAdd
+                        className="text-blue-300 cursor-pointer hover:text-blue-700 min-w-5 min-h-5"
+                        onClick={() => setRuleToShow(ruleFromFinanceRow(row.original))}
+                      />
                     </WithTooltip>
                   </span>
                 </td>
@@ -485,6 +495,21 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
         </select>
       </div>
       <div className="mt-2 text-sm">{table.getPrePaginationRowModel().rows.length} Rows</div>
+      {ruleToShow && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-xl w-full">
+            <h1 className="text-xl font-semibold pb-4">Create Rule</h1>
+            <RuleForm
+              defaultRule={ruleToShow}
+              onSubmit={async (newRule) => {
+                await DatabaseService.writeRuleToDatabase({ rule: newRule });
+                setRuleToShow(null);
+              }}
+              onCancel={() => setRuleToShow(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
