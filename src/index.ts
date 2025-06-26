@@ -174,18 +174,23 @@ ipcMain.on('readDatabaseRules', async (event, props: ReadDatabaseRulesProps) => 
 // Write a new rule
 ipcMain.on('writeDatabaseRules', async (event, props: WriteDatabaseRulesProps) => {
   try {
-    await db.insertRule(props.rule);
-    const newLastId = await db.getLastRuleId();
+    const insertPromises = props.rules.map(rule => {
+      return new Promise<void>(async (resolve, reject) => {
+        await db.insertRule(rule);
+        resolve();
+      });
+    });
+
+    await Promise.all(insertPromises);
+
     const response: OnWriteDatabaseRulesResult = {
-      data: props.rule,
-      newRuleId: newLastId,
+      data: props.rules,
     };
     event.reply('writeDatabaseRulesResult', response);
   } catch (err) {
     console.error("Error writing rule:", err);
     const response: OnWriteDatabaseRulesResult = {
-      data: props.rule,
-      newRuleId: -1,
+      data: props.rules,
       err,
     };
     event.reply('writeDatabaseRulesResult', response);

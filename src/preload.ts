@@ -73,11 +73,10 @@ export interface OnReadDatabaseRulesResult extends Result {
 }
 
 export interface WriteDatabaseRulesProps {
-  rule: Rule;
+  rules: Rule[];
 }
 export interface OnWriteDatabaseRulesResult extends Result {
   data: any;
-  newRuleId: number;
 }
 
 export interface DeleteDatabaseRulesProps {

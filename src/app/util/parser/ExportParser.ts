@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../views/MultiFileUploader";
+import { InputFileLabel } from "../../components/TransactionTableUploader";
 
 export interface ExportInputRow {
   date: Date;
@@ -42,7 +42,7 @@ export default class ExportParser implements IParser<string, ExportInputRow[]> {
       },
       complete: (result: any) => {
         const data = result.data as any[][]; // Data from PapaParse
-        data.forEach(row => {
+        data.slice(1).forEach(row => {
           rows.push({
             date: cleanDate(row[1]),
             amount: row[2],

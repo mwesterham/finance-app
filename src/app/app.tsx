@@ -28,7 +28,7 @@ const App = () => {
         }}/>
       </div>
       <div className="mb-4 flex border-b">
-        {["pivotTable", "tanstackTable", "fillTable", "ruleManager", "multiFileUploader"].map((tab) => (
+        {["pivotTable", "transactionTable", "fillTable", "ruleManager", "importFiles"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -40,10 +40,10 @@ const App = () => {
       </div>
 
       {activeTab === "pivotTable" && <TanstackExploreTable key={version} />}
-      {activeTab === "multiFileUploader" && <MultiFileUploader key={version} />}
+      {activeTab === "importFiles" && <MultiFileUploader key={version} />}
       {activeTab === "fillTable" && <RuleBasedCategorizer key={version} />}
       {activeTab === "ruleManager" && <RuleManager key={version} />}
-      {activeTab === "tanstackTable" && <TanstackDataTable key={version} />}
+      {activeTab === "transactionTable" && <TanstackDataTable key={version} />}
     </div>
   );
 };

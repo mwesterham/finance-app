@@ -397,7 +397,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
           <RuleForm
             defaultRule={ruleToShow}
             onSubmit={async (newRule) => {
-              await DatabaseService.writeRuleToDatabase({ rule: newRule });
+              await DatabaseService.writeRuleToDatabase({ rules: [newRule] });
               setRuleToShow(null);
               fetchDatabaseRules();
             }}

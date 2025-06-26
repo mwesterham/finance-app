@@ -466,7 +466,7 @@ export const RuleManager = (props: RuleManagerProps) => {
             
             <RuleForm
               onSubmit={async (newRule) => {
-                await DatabaseService.writeRuleToDatabase({ rule: newRule });
+                await DatabaseService.writeRuleToDatabase({ rules: [newRule] });
                 setShowModal(false);
                 fetchDatabaseRules();
               }}

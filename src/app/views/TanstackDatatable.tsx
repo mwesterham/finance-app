@@ -502,7 +502,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
             <RuleForm
               defaultRule={ruleToShow}
               onSubmit={async (newRule) => {
-                await DatabaseService.writeRuleToDatabase({ rule: newRule });
+                await DatabaseService.writeRuleToDatabase({ rules: [newRule] });
                 setRuleToShow(null);
               }}
               onCancel={() => setRuleToShow(null)}
