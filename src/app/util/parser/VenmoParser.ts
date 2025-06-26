@@ -1,8 +1,8 @@
 import Papa from "papaparse";
 import { IParser } from "./IParser";
-import { cleanDate, cleanNumber, formatVenmoNumber } from "../util";
+import { cleanDate, formatVenmoNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../components/TransactionTableUploader";
+import { InputFileLabel } from "../../views/MultiFileUploader";
 
 export interface VenmoInputRow {
   date: Date;
