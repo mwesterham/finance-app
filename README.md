@@ -2,6 +2,8 @@
 
 This finance app is an electron-powered desktop application who allows its users to upload, label, explore, and export financial transactions. It includes automatic categorization of financial transactions based off rules as well as graphs to easily understand month-by-month financial activity. It supports importing financial documents from Chase and Wells Fargo.
 
+Includes auto-updates, so users only need install once.
+
 ### Setup
 
 To get started, you may clone the repository and install yourself.
