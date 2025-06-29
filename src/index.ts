@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from 'electron';
-const { updateElectronApp } = require('update-electron-app')
+import { updateElectronApp } from 'update-electron-app';
 import { ipcMain } from 'electron';
 import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps } from './preload';
 import { DatabaseName, FinanceSheetRow, WesterhamDatabase } from './db/WesterhamDatabase';

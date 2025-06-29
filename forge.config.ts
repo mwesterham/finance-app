@@ -33,7 +33,8 @@ const config: ForgeConfig = {
           owner: 'mwesterham',
           name: 'finance-app'
         },
-        prerelease: true
+        prerelease: false,
+        draft: false,
       }
     }
   ],
