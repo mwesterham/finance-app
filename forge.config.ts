@@ -29,6 +29,10 @@ const config: ForgeConfig = {
     {
       name: '@electron-forge/publisher-github',
       config: {
+        repository: {
+          owner: 'mwesterham',
+          name: 'finance-app'
+        },
         prerelease: true
       }
     }

@@ -24,7 +24,23 @@ npm run make
 
 You can find the executable in the generated `/out` folder
 
-### New release
+### Publishing directly to releases
+
+Set `GITHUB_TOKEN` with `repo:` permissions
+
+```
+export GITHUB_ACTIONS=XXXXXXX
+
+set GITHUB_ACTIONS=XXXXXXX
+```
+
+Then publish
+
+```
+npm run publish
+```
+
+### New release via github actions
 
 Update `package.json` with new version.
 
@@ -34,4 +50,18 @@ git tag v1.0.0
 
 ```
 git push origin v1.0.0
+```
+
+### Update existing release (testing only)
+
+```
+git tag -d vX.X.X
+```
+
+```
+git tag vX.X.X
+```
+
+```
+git push --force origin vX.X.X
 ```
