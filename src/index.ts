@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from 'electron';
+const { updateElectronApp } = require('update-electron-app')
 import { ipcMain } from 'electron';
 import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps } from './preload';
 import { DatabaseName, FinanceSheetRow, WesterhamDatabase } from './db/WesterhamDatabase';
@@ -10,6 +11,9 @@ import { FileService } from './file/FileService';
 // whether you're running in development or production).
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+
+// Enable autoupdates
+updateElectronApp();
 
 const dbsTargetPath = path.join(app.getPath("userData"), 'financeApp', 'dbs');
 let db = new WesterhamDatabase(FileService.getOrCreateDbFilePath(dbsTargetPath, DatabaseName.DEFAULT));
