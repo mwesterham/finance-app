@@ -28,7 +28,7 @@ const App = () => {
         }}/>
       </div>
       <div className="mb-4 flex border-b">
-        {["pivotTable", "transactionTable", "categorizeEmptyTransactions", "ruleManager", "importFiles"].map((tab) => (
+        {["pivotTable", "transactionTable", "categorizeItems", "ruleManager", "importFiles"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -41,7 +41,7 @@ const App = () => {
 
       {activeTab === "pivotTable" && <TanstackExploreTable key={version} />}
       {activeTab === "importFiles" && <MultiFileUploader key={version} />}
-      {activeTab === "categorizeEmptyTransactions" && <RuleBasedCategorizer key={version} />}
+      {activeTab === "categorizeItems" && <RuleBasedCategorizer key={version} />}
       {activeTab === "ruleManager" && <RuleManager key={version} />}
       {activeTab === "transactionTable" && <TanstackDataTable key={version} />}
     </div>
