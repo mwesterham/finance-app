@@ -23,3 +23,15 @@ npm run make
 ```
 
 You can find the executable in the generated `/out` folder
+
+### New release
+
+Update `package.json` with new version.
+
+```
+git tag v1.0.0
+```
+
+```
+git push origin v1.0.0
+```
