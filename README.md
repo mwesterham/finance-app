@@ -46,13 +46,26 @@ npm run publish
 
 Update `package.json` with new version.
 
+
 ```
-git tag v1.0.0
+"version": "1.0.4",
 ```
 
 ```
-git push origin v1.0.0
+git add .
+git commit -m "Update latest tag"
+git push
 ```
+
+```
+git tag v1.0.4
+```
+
+```
+git push origin v1.0.4
+```
+
+This will kick off a github actions workflow which will allow clients to update automatically.
 
 ### Update existing release (testing only)
 
