@@ -172,21 +172,32 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
   const [providedDetailOptions, setProvidedDetailOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchDatabaseRows();
-    fetchDatabaseRules();
-    populateOptions();  
+    fetchContextForTable();
   }, []);
-  
-  const populateOptions = async () => {
+
+  const fetchContextForTable = async () => {
+    // fetchDatabaseRows
+    DatabaseService.readEmptyCategoryDatabaseRows().then((values) => {
+      console.log("Database finance rows read result length:", values.rows.length);
+      setRowData(values.rows);
+    });
+
+    // fetchDatabaseRows
+    DatabaseService.readDatabaseRules().then((values) => {
+      console.log("Database rules read result length:", values.rules.length);
+      setRules(values.rules);
+    });
+
+    // populateOptions
     const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
       table: "finance_sheet",
       column: "category"
     });
+    setCategoryOptions(categoriesResult.distinctValues.sort());
     const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
       table: "finance_sheet",
       column: "provided_detail"
     })
-    setCategoryOptions(categoriesResult.distinctValues.sort());
     setProvidedDetailOptions(detailsResult.distinctValues.sort());
   }
 
@@ -216,20 +227,6 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
       }
     }
     setRowData([...newRowData]);
-  };
-
-  const fetchDatabaseRows = async () => {
-    DatabaseService.readEmptyCategoryDatabaseRows().then((values) => {
-      console.log("Database finance rows read result length:", values.rows.length);
-      setRowData(values.rows);
-    });
-  };
-
-  const fetchDatabaseRules = async () => {
-    DatabaseService.readDatabaseRules().then((values) => {
-      console.log("Database rules read result length:", values.rules.length);
-      setRules(values.rules);
-    });
   };
 
   const [columnVisibility, setColumnVisibility] = useState({
@@ -290,7 +287,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
         <button
           onClick={async () => {
             await updateRows();
-            fetchDatabaseRows();
+            fetchContextForTable();
           }}
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4"
         >
@@ -399,7 +396,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
             onSubmit={async (newRule) => {
               await DatabaseService.writeRuleToDatabase({ rules: [newRule] });
               setRuleToShow(null);
-              fetchDatabaseRules();
+              fetchContextForTable();
             }}
             onCancel={() => setRuleToShow(null)}
           />
