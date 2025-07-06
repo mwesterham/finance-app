@@ -193,12 +193,23 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
       table: "finance_sheet",
       column: "category"
     });
-    setCategoryOptions(categoriesResult.distinctValues.sort());
+    const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "rules",
+      column: "category"
+    });
+    const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
+    setCategoryOptions([...allCategories].sort());
+
     const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
       table: "finance_sheet",
       column: "provided_detail"
-    })
-    setProvidedDetailOptions(detailsResult.distinctValues.sort());
+    });
+    const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "rules",
+      column: "provided_detail"
+    });
+    const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
+    setProvidedDetailOptions([...allDetails].sort());
   }
 
   const updateRows = async () => {

@@ -27,12 +27,23 @@ export const RuleForm: React.FC<RuleFormProps> = ({ onSubmit, onCancel, defaultR
       table: "finance_sheet",
       column: "category"
     });
+    const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "rules",
+      column: "category"
+    });
+    const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
+    setCategoryOptions([...allCategories].sort());
+
     const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
       table: "finance_sheet",
       column: "provided_detail"
-    })
-    setCategoryOptions(categoriesResult.distinctValues.sort());
-    setProvidedDetailOptions(detailsResult.distinctValues.sort());
+    });
+    const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
+      table: "rules",
+      column: "provided_detail"
+    });
+    const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
+    setProvidedDetailOptions([...allDetails].sort());
   }
 
   const handleSubmit = (e: React.FormEvent) => {
