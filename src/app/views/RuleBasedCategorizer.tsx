@@ -25,7 +25,7 @@ import {
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, prettyPrintString, ruleFromFinanceRow } from '../util/util';
+import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAmount, prettyPrintString, ruleFromFinanceRow } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import WithTooltip from '../components/WithTooltip';
 import { epochToDateStr } from '../util/time';
@@ -187,29 +187,9 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
       console.log("Database rules read result length:", values.rules.length);
       setRules(values.rules);
     });
-
-    // populateOptions
-    const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "category"
-    });
-    const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "category"
-    });
-    const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
-    setCategoryOptions([...allCategories].sort());
-
-    const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "provided_detail"
-    });
-    const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "provided_detail"
-    });
-    const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
-    setProvidedDetailOptions([...allDetails].sort());
+    
+    setCategoryOptions(await fetchUniqueCategoriesForTable());
+    setProvidedDetailOptions(await fetchUniqueDetailsForTable());
   }
 
   const updateRows = async () => {

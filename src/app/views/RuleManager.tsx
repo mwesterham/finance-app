@@ -26,7 +26,7 @@ import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
+import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
@@ -275,27 +275,8 @@ export const RuleManager = (props: RuleManagerProps) => {
   }, []);
 
   const populateOptions = async () => {
-    const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "category"
-    });
-    const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "category"
-    });
-    const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
-    setCategoryOptions([...allCategories].sort());
-
-    const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "provided_detail"
-    });
-    const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "provided_detail"
-    });
-    const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
-    setProvidedDetailOptions([...allDetails].sort());
+      setCategoryOptions(await fetchUniqueCategoriesForTable());
+      setProvidedDetailOptions(await fetchUniqueDetailsForTable());
   }
 
   const fetchDatabaseRules = async () => {

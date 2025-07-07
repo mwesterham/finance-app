@@ -2,6 +2,7 @@ import { Column } from "@tanstack/react-table";
 import { getAbbreviatedMonth } from "./time";
 import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 import { Rule } from "../../db/WesterhamDatabase";
+import DatabaseService from "./DatabaseService";
 
 export const cleanNumber = (str: string): number => {
   return parseFloat(str.replace(/[^0-9.-]/g, "").trim());
@@ -65,4 +66,30 @@ export const ruleFromFinanceRow = (row: FinanceSheetRow) => {
     category: row.category,
     providedDetail: row.providedDetail,
   } as Rule;
+}
+
+export const fetchUniqueCategoriesForTable = async () => {
+  const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+    table: "finance_sheet",
+    column: "category"
+  });
+  const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
+    table: "rules",
+    column: "category"
+  });
+  const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
+  return [...allCategories].sort();
+}
+
+export const fetchUniqueDetailsForTable = async () => {
+  const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
+    table: "finance_sheet",
+    column: "provided_detail"
+  });
+  const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
+    table: "rules",
+    column: "provided_detail"
+  });
+  const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
+  return [...allDetails].sort();
 }

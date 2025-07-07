@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Rule } from "../../db/WesterhamDatabase";
 import DatabaseService from "../util/DatabaseService";
-import { cx } from "../util/util";
+import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable } from "../util/util";
 
 interface RuleFormProps {
   onSubmit: (rule: Rule) => void;
@@ -23,27 +23,8 @@ export const RuleForm: React.FC<RuleFormProps> = ({ onSubmit, onCancel, defaultR
   }, []);
 
   const populateOptions = async () => {
-    const categoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "category"
-    });
-    const rulesCategoriesResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "category"
-    });
-    const allCategories = new Set([...categoriesResult.distinctValues, ...rulesCategoriesResult.distinctValues]);
-    setCategoryOptions([...allCategories].sort());
-
-    const detailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "finance_sheet",
-      column: "provided_detail"
-    });
-    const rulesDetailsResult = await DatabaseService.getDistinctValuesOfColumn({
-      table: "rules",
-      column: "provided_detail"
-    });
-    const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
-    setProvidedDetailOptions([...allDetails].sort());
+      setCategoryOptions(await fetchUniqueCategoriesForTable());
+      setProvidedDetailOptions(await fetchUniqueDetailsForTable());
   }
 
   const handleSubmit = (e: React.FormEvent) => {
