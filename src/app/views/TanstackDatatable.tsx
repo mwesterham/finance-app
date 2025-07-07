@@ -27,7 +27,7 @@ import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, getPossibleValuesFromCol, prettyPrintString, ruleFromFinanceRow } from '../util/util';
+import { cx, formatAmount, getAttachedDb, getBaseDbName, getPossibleValuesFromCol, prettyPrintString, ruleFromFinanceRow } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
@@ -340,6 +340,44 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
   );
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
 
+  const handleFilteredExportTransactions = async () => {
+    const filteredRows = table.getFilteredRowModel().rows;
+
+    if (!filteredRows.length) return;
+
+    const rows = filteredRows.map(row => row.original);
+    const headers = Object.keys(rows[0]);
+
+    const csv = [
+      headers.join(","), // header row
+      ...rows.slice().sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0)).map(row =>
+        headers.map(header => {
+          let val = (row as any)[header];
+          if (val == null) return "";
+
+          if (header === "epoch") {
+            const date = new Date(val);
+            val = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+          }
+
+          const escaped = String(val).replace(/"/g, '""');
+          return `"${escaped}"`;
+        }).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const dbName = await getAttachedDb();
+    link.setAttribute("download", `${getBaseDbName(dbName.length > 0 ? dbName : "default")}-finance_app-filtered-transactions.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const table = useReactTable({
     data: rowData,
     columns,
@@ -375,7 +413,13 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
   });
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-lg">
+    <div className="flex flex-col gap-4 p-4 bg-white shadow-md rounded-lg">
+      <button
+        onClick={handleFilteredExportTransactions}
+        className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700 w-1/4"
+      >
+        Export Filtered View
+      </button>
       <table className="min-w-full border-collapse border border-gray-300">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map(headerGroup => (

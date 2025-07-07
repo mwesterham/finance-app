@@ -13,7 +13,9 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 // Enable autoupdates
-updateElectronApp();
+updateElectronApp({
+  updateInterval: "5 minutes",
+});
 
 const dbsTargetPath = path.join(app.getPath("userData"), 'financeApp', 'dbs');
 let db = new WesterhamDatabase(FileService.getOrCreateDbFilePath(dbsTargetPath, DatabaseName.DEFAULT));

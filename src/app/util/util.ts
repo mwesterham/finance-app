@@ -93,3 +93,13 @@ export const fetchUniqueDetailsForTable = async () => {
   const allDetails = new Set([...detailsResult.distinctValues, ...rulesDetailsResult.distinctValues]);
   return [...allDetails].sort();
 }
+
+export const getBaseDbName = (db: string) => {
+  return db.split(".")[0];
+}
+
+export const getAttachedDb = async () => {
+  const localDbPathResponse = await DatabaseService.getDbLocalPath();
+  const parts = localDbPathResponse.path.split("\\");
+  return parts[parts.length - 1];
+}

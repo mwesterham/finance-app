@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import DatabaseService from "../util/DatabaseService";
 import { FinanceSheetRow, Rule } from "../../db/WesterhamDatabase";
+import { getAttachedDb, getBaseDbName } from "../util/util";
 
 interface DatabaseManagerProps {
   onSelect: (option: string) => void;
-}
-
-const getBaseDbName = (db: string) => {
-  return db.split(".")[0];
 }
 
 export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
@@ -68,7 +65,8 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-finance_app-rules.csv`);
+    const dbName = await getAttachedDb();
+    link.setAttribute("download", `${getBaseDbName(dbName.length > 0 ? dbName : "default")}-finance_app-rules.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -85,7 +83,7 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
     const headers = Object.keys(rows[0]);
     const csv = [
       headers.join(","), // header row
-      ...rows.map(row =>
+      ...rows.slice().sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0)).map(row =>
         headers.map(header => {
           let val = (row as any)[header];
           if (val == null) return ""; // handle nulls/undefined
@@ -107,7 +105,8 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${getBaseDbName(selectedPath.length > 0 ? selectedPath : "default")}-finance_app-transactions.csv`);
+    const dbName = await getAttachedDb();
+    link.setAttribute("download", `${getBaseDbName(dbName.length > 0 ? dbName : "default")}-finance_app-transactions.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
