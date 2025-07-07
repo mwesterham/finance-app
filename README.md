@@ -53,7 +53,7 @@ Update `package.json` with new version.
 
 ```
 git add .
-git commit -m "Update latest tag"
+git commit -m "Update latest tag to 1.0.4"
 git push
 ```
 
