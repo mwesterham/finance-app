@@ -9,10 +9,12 @@ import DatabaseService from "../util/DatabaseService";
 import DiscoverParser from "../util/parser/DiscoverParser";
 import ExportParser from "../util/parser/ExportParser";
 import RulesExportsParser from "../util/parser/RulesExportsParser";
+import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 
 export interface LabeledFile {
   file: File;
   label: InputFileLabel;
+  identifier: string;
 }
 
 export enum InputFileLabel {
@@ -48,10 +50,19 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files).map((file) => ({
         file,
-        label: getRecommendedFileType(file.name), // Default selection
+        label: getRecommendedFileType(file.name),
+        identifier: "",
       }));
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     }
+  };
+
+  const handleIdentifierChange = (index: number, newIdentifier: string) => {
+    setFiles((prevFiles) =>
+      prevFiles.map((file, i) =>
+        i === index ? { ...file, identifier: newIdentifier } : file
+      )
+    );
   };
 
   const handleLabelChange = (index: number, newLabel: InputFileLabel) => {
@@ -67,68 +78,63 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   };
 
   const handleMultiFileSubmit = async (files: LabeledFile[]) => {
-    for (const { file, label } of files) {
+    for (const { file, label, identifier } of files) {
       const text = await file.text();
+      let rows: FinanceSheetRow[] | undefined;
+
       switch (label) {
-        case InputFileLabel.WELLS_FARGO_CHECKING: {
-          const rows = checkingParser.toFinanceRows(text);
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        case InputFileLabel.WELLS_FARGO_CHECKING:
+          rows = checkingParser.toFinanceRows(text);
           break;
-        }
-        case InputFileLabel.WELLS_FARGO_CREDIT: {
-          const rows = creditParser.toFinanceRows(text);
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        case InputFileLabel.WELLS_FARGO_CREDIT:
+          rows = creditParser.toFinanceRows(text);
           break;
-        }
-        case InputFileLabel.VENMO: {
-          const rows = venmoParser.toFinanceRows(text);
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        case InputFileLabel.VENMO:
+          rows = venmoParser.toFinanceRows(text);
           break;
-        }
-        case InputFileLabel.MATTHEW_SNAPSHOT_VENMO: {
-          const rows = matthewVenmoSnapshotParser.toFinanceRows({
-            text: text,
-            label: InputFileLabel.VENMO
+        case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
+          rows = matthewVenmoSnapshotParser.toFinanceRows({
+            text,
+            label: InputFileLabel.VENMO,
           });
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
           break;
-        }
-        case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT: {
-          const rows = matthewCreditSnapshotParser.toFinanceRows({
-            text: text,
-            label: InputFileLabel.WELLS_FARGO_CREDIT
+        case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT:
+          rows = matthewCreditSnapshotParser.toFinanceRows({
+            text,
+            label: InputFileLabel.WELLS_FARGO_CREDIT,
           });
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
           break;
-        }
-        case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING: {
-          const rows = matthewCheckingSnapshotParser.toFinanceRows({
-            text: text,
-            label: InputFileLabel.WELLS_FARGO_CHECKING
+        case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING:
+          rows = matthewCheckingSnapshotParser.toFinanceRows({
+            text,
+            label: InputFileLabel.WELLS_FARGO_CHECKING,
           });
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
           break;
-        }
-        case InputFileLabel.DISCOVER: {
-          const rows = discoverParser.toFinanceRows(text);
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        case InputFileLabel.DISCOVER:
+          rows = discoverParser.toFinanceRows(text);
           break;
-        }
-        case InputFileLabel.EXPORT: {
-          const rows = exportParser.toFinanceRows(text);
-          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        case InputFileLabel.EXPORT:
+          rows = exportParser.toFinanceRows(text);
           break;
-        }
-        case InputFileLabel.RULES_EXPORT: {
+        case InputFileLabel.RULES_EXPORT:
           const rules = rulesExportParser.parse(text);
-          await DatabaseService.writeRuleToDatabase({ rules: rules });
-          break;
-        }
-        default: {
-          console.log(`Invalid label ${label}`)
-        }
+          await DatabaseService.writeRuleToDatabase({ rules });
+          continue;
+        default:
+          console.log(`Invalid label ${label}`);
+          continue;
       }
-    };
+
+      if (rows) {
+        const fullSource = identifier !== undefined && identifier.length > 0 ? `${label} | ${identifier}` : label;
+        rows = rows.map((row) => ({
+          ...row,
+          source: fullSource,
+        }));
+
+        await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+      }
+    }
   };
 
   const handleSubmit = () => {
@@ -148,7 +154,10 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
       return InputFileLabel.VENMO;
     } else if (fileName.toLowerCase().includes("discover")) {
       return InputFileLabel.DISCOVER;
-    } else if (fileName.toLowerCase().includes("finance_app-transactions")) {
+    } else if (
+      fileName.toLowerCase().includes("finance_app-transactions") ||
+      fileName.toLowerCase().includes("finance_app-filtered-transactions")
+    ) {
       return InputFileLabel.EXPORT;
     } else if (fileName.toLowerCase().includes("finance_app-rules")) {
       return InputFileLabel.RULES_EXPORT;
@@ -165,7 +174,12 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
       <div className="space-y-2">
         {files.map((file, index) => (
           <div key={index} className="flex items-center gap-2 border p-2 rounded-lg">
-            <span className="truncate flex-1">{file.file.name}</span>
+            <button
+              onClick={() => handleRemoveFile(index)}
+              className="text-red-500 hover:text-red-700 p-1"
+            >
+              X
+            </button>
             <select
               value={file.label}
               onChange={(e) => handleLabelChange(index, e.target.value as InputFileLabel)}
@@ -177,12 +191,15 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
                 </option>
               ))}
             </select>
-            <button
-              onClick={() => handleRemoveFile(index)}
-              className="text-red-500 hover:text-red-700 p-1"
-            >
-              X
-            </button>
+            <input
+              disabled={file.label == InputFileLabel.RULES_EXPORT ? true : false}
+              type="text"
+              value={file.identifier || ""}
+              onChange={(e) => handleIdentifierChange(index, e.target.value)}
+              placeholder="Source Id (optional)"
+              className="p-1 border rounded-md"
+            />
+            <span className="truncate">{file.file.name}</span>
           </div>
         ))}
       </div>

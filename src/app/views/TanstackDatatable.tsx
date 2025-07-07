@@ -413,7 +413,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-white shadow-md rounded-lg">
+    <div className="flex flex-col gap-4 p-4 bg-white shadow-md rounded-lg overflow-x-scroll">
       <button
         onClick={handleFilteredExportTransactions}
         className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700 w-1/4"
