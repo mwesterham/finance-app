@@ -27,7 +27,7 @@ import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { cx, formatAmount, getAttachedDb, getBaseDbName, getPossibleValuesFromCol, prettyPrintString, ruleFromFinanceRow } from '../util/util';
+import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAmount, getAttachedDb, getBaseDbName, getPossibleValuesFromCol, prettyPrintString, ruleFromFinanceRow } from '../util/util';
 import EditableInput from '../components/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
@@ -59,228 +59,233 @@ const updateRow = async (transactionId: string, row: FinanceSheetRow) => {
 
 const columnHelper = createColumnHelper<FinanceSheetRow>();
 
-const columns = [
-  columnHelper.accessor(row => row.epoch, {
-    id: 'epoch',
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
+const getColumns = (
+  suggestedCategories: string[],
+  providedDetailOptions: string[]
+) => {
+  return [
+    columnHelper.accessor(row => row.epoch, {
+      id: 'epoch',
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
 
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to 1970-01-01.`);
-          val = "1970-01-01"
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to 1970-01-01.`);
+            val = "1970-01-01"
+          }
+          const localDate = new Date(val + 'T00:00:00');
+          const num = localDate.getTime();
+          table.options.meta?.updateData(row.index, column.id, num); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            epoch: num
+          });
+        };
+
+        return <>
+          <EditableInput
+            value={epochToDateStr(value)}
+            type="date"
+            displayBody={<>{customFormatDate(value)}</>}
+            onChange={onChange}
+          />
+        </>;
+      },
+      header: ({ column }) => <span>{"Date"}</span>,
+      footer: ({ column }) => <span>{"Date"}</span>,
+      meta: {
+        filterVariant: 'daterange',
+      },
+    }),
+    columnHelper.accessor('transactionId', {
+      cell: info => info.getValue(),
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      meta: {
+        filterVariant: 'select',
+      },
+    }),
+    columnHelper.accessor('amount', {
+      header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
+
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to 0.`);
+            val = "0";
+          }
+          const num = Number(val);
+          table.options.meta?.updateData(row.index, column.id, num); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            amount: num
+          });
+        };
+
+        const amt = formatAmount(value);
+
+        return <>
+          <EditableInput
+            value={value}
+            type="number"
+            displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
+            onChange={onChange}
+          />
+        </>;
+      },
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      meta: {
+        filterVariant: 'range',
+      },
+    }),
+    columnHelper.accessor('category', {
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
+
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          let isBlank = false;
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to undefined.`);
+            isBlank = true;
+          }
+          const str = isBlank ? undefined : String(val);
+          table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            category: isBlank ? undefined : str
+          });
+        };
+
+        return <>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            suggestions={suggestedCategories}
+            onChange={onChange}
+          />
+        </>;
+      },
+      header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      filterFn: (row, columnId, filterValue, addMeta) => {
+        if (filterValue === "only_null") {
+          return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
         }
-        const localDate = new Date(val + 'T00:00:00');
-        const num = localDate.getTime();
-        table.options.meta?.updateData(row.index, column.id, num); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          epoch: num
-        });
-      };
+        return filterFns.includesString(row, columnId, filterValue, addMeta); // Return all rows if filter is not active
+      },
+      meta: {
+        filterVariant: 'select',
+      },
+    }),
+    columnHelper.accessor('providedDetail', {
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
 
-      return <>
-        <EditableInput
-          value={epochToDateStr(value)}
-          type="date"
-          displayBody={<>{customFormatDate(value)}</>}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{"Date"}</span>,
-    footer: ({ column }) => <span>{"Date"}</span>,
-    meta: {
-      filterVariant: 'daterange',
-    },
-  }),
-  columnHelper.accessor('transactionId', {
-    cell: info => info.getValue(),
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'select',
-    },
-  }),
-  columnHelper.accessor('amount', {
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          let isBlank = false;
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to null.`);
+            isBlank = true;
+          }
+          const str = isBlank ? undefined : String(val);
+          table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            providedDetail: isBlank ? undefined : str
+          });
+        };
 
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to 0.`);
-          val = "0";
-        }
-        const num = Number(val);
-        table.options.meta?.updateData(row.index, column.id, num); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          amount: num
-        });
-      };
+        return <>
+          <EditableInput
+            suggestions={providedDetailOptions}
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
+        </>;
+      },
+      header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      meta: {
+        filterVariant: 'search',
+      },
+    }),
+    columnHelper.accessor('transactionInfo', {
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
 
-      const amt = formatAmount(value);
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+            val = "";
+          }
+          const str = String(val);
+          table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            transactionInfo: str
+          });
+        };
 
-      return <>
-        <EditableInput
-          value={value}
-          type="number"
-          displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
-          onChange={onChange}
-        />
-      </>;
-    },
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'range',
-    },
-  }),
-  columnHelper.accessor('category', {
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
+        return <>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
+        </>;
+      },
+      header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      meta: {
+        filterVariant: 'search',
+      },
+    }),
+    columnHelper.accessor('source', {
+      cell: ({ getValue, row, column, table }) => {
+        const value = getValue();
 
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        let isBlank = false;
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to undefined.`);
-          isBlank = true;
-        }
-        const str = isBlank ? undefined : String(val);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          category: isBlank ? undefined : str
-        });
-      };
+        // Handle changes to the input field
+        const onChange = async (val: any) => {
+          if (val == null || val == undefined) {
+            console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
+            val = "";
+          }
+          const str = String(val);
+          table.options.meta?.updateData(row.index, column.id, str); // Update data on change
+          await updateRow(row.original.transactionId, {
+            ...row.original,
+            source: str
+          });
+        };
 
-      return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          suggestions={getPossibleValuesFromCol(column)}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    filterFn: (row, columnId, filterValue, addMeta) => {
-      if (filterValue === "only_null") {
-        return row.getValue(columnId) === null || row.getValue(columnId) === undefined;
-      }
-      return filterFns.includesString(row, columnId, filterValue, addMeta); // Return all rows if filter is not active
-    },
-    meta: {
-      filterVariant: 'select',
-    },
-  }),
-  columnHelper.accessor('providedDetail', {
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
-
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        let isBlank = false;
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to null.`);
-          isBlank = true;
-        }
-        const str = isBlank ? undefined : String(val);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          providedDetail: isBlank ? undefined : str
-        });
-      };
-
-      return <>
-        <EditableInput
-          suggestions={getPossibleValuesFromCol(column)}
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'search',
-    },
-  }),
-  columnHelper.accessor('transactionInfo', {
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
-
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
-          val="";
-        }
-        const str = String(val);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          transactionInfo: str
-        });
-      };
-
-      return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'search',
-    },
-  }),
-  columnHelper.accessor('source', {
-    cell: ({ getValue, row, column, table }) => {
-      const value = getValue();
-
-      // Handle changes to the input field
-      const onChange = async (val: any) => {
-        if(val == null || val == undefined) {
-          console.warn(`${prettyPrintString(column.id)} is blank. Setting to empty string.`);
-          val = "";
-        }
-        const str = String(val);
-        table.options.meta?.updateData(row.index, column.id, str); // Update data on change
-        await updateRow(row.original.transactionId, {
-          ...row.original,
-          source: str
-        });
-      };
-
-      return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          suggestions={getPossibleValuesFromCol(column)}
-          onChange={onChange}
-        />
-      </>;
-    },
-    header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    meta: {
-      filterVariant: 'select',
-    },
-  }),
-];
+        return <>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            suggestions={getPossibleValuesFromCol(column)}
+            onChange={onChange}
+          />
+        </>;
+      },
+      header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
+      meta: {
+        filterVariant: 'select',
+      },
+    }),
+  ];
+}
 
 export interface TanstackDataTableProps {
 }
@@ -290,6 +295,8 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
   const [highlightedRow, setHighlightedRows] = useState<number[]>([]);
   const [deletedRows, setDeletedRows] = useState<number[]>([]);
   const [ruleToShow, setRuleToShow] = useState<Rule>(null);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [providedDetailOptions, setProvidedDetailOptions] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDatabaseRows();
@@ -300,6 +307,9 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
       console.log("Database read result length:", values.rows.length);
       setRowData(values.rows);
     });
+
+    setCategoryOptions(await fetchUniqueCategoriesForTable());
+    setProvidedDetailOptions(await fetchUniqueDetailsForTable());
   };
 
   const deleteRow = async (transactionId: number) => {
@@ -380,7 +390,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
 
   const table = useReactTable({
     data: rowData,
-    columns,
+    columns: getColumns(categoryOptions, providedDetailOptions),
     state: { columnSizing, sorting, columnVisibility, columnFilters },
     initialState: { pagination: { pageSize: 20 } },
     getCoreRowModel: getCoreRowModel(),
