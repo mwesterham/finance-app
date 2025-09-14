@@ -10,7 +10,8 @@ import DiscoverParser from "../util/parser/DiscoverParser";
 import ExportParser from "../util/parser/ExportParser";
 import RulesExportsParser from "../util/parser/RulesExportsParser";
 import { FinanceSheetRow } from "../../db/WesterhamDatabase";
-import CapitalOneCreditParserParser from "../util/parser/CapitalOneCreditParser";
+import CapitalOneCreditParser from "../util/parser/CapitalOneCreditParser";
+import AmexCreditParser from "../util/parser/AmexCreditParserParser";
 
 export interface LabeledFile {
   file: File;
@@ -22,6 +23,7 @@ export enum InputFileLabel {
   WELLS_FARGO_CHECKING = "Wells Fargo Checking",
   WELLS_FARGO_CREDIT = "Wells Fargo Credit",
   CAPITAL_ONE_CREDIT = "Capital One Credit",
+  AMEX_CREDIT = "Amex Credit",
   VENMO = "Venmo",
   MATTHEW_SNAPSHOT_CHECKING = "Wells Fargo Checking Snapshot",
   MATTHEW_SNAPSHOT_CREDIT = "Wells Fargo Credit Snapshot",
@@ -38,7 +40,8 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   const checkingParser = new CheckingParser();
   const creditParser = new CreditParser();
   const venmoParser = new VenmoParser();
-  const capitalOneCreditParser = new CapitalOneCreditParserParser();
+  const capitalOneCreditParser = new CapitalOneCreditParser();
+  const amexCreditParser = new AmexCreditParser();
   const matthewCheckingSnapshotParser = new MatthewCheckingSnapshotParser();
   const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
   const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
@@ -97,6 +100,9 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           break;
         case InputFileLabel.CAPITAL_ONE_CREDIT:
           rows = capitalOneCreditParser.toFinanceRows(text);
+          break;
+        case InputFileLabel.AMEX_CREDIT:
+          rows = amexCreditParser.toFinanceRows(text);
           break;
         case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
           rows = matthewVenmoSnapshotParser.toFinanceRows({
@@ -162,6 +168,8 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
       return InputFileLabel.CAPITAL_ONE_CREDIT;
     } else if (fileName.toLowerCase().includes("discover")) {
       return InputFileLabel.DISCOVER;
+    } else if (fileName.toLowerCase().includes("activity.csv")) {
+      return InputFileLabel.AMEX_CREDIT;
     } else if (
       fileName.toLowerCase().includes("finance_app-transactions") ||
       fileName.toLowerCase().includes("finance_app-filtered-transactions")

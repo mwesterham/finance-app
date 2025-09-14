@@ -4,29 +4,29 @@ import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../views/MultiFileUploader";
 
-export interface CapitalOneCreditParserInputRow {
+export interface AmexCreditParserInputRow {
   date: Date;
+  description: string;
   amount: number;
-  detail: string;
 }
 
-export default class CapitalOneCreditParser implements IParser<string, CapitalOneCreditParserInputRow[]> {
+export default class AmexCreditParser implements IParser<string, AmexCreditParserInputRow[]> {
   toFinanceRows(input: string): FinanceSheetRow[] {
     const capitalOneInputs = this.parse(input);
     const financeRows: FinanceSheetRow[] = capitalOneInputs.map(capitalOneInput => {
       const financeRow: FinanceSheetRow = {
         epoch: capitalOneInput.date.getTime(),
         amount: capitalOneInput.amount,
-        source: InputFileLabel.CAPITAL_ONE_CREDIT,
-        transactionInfo: capitalOneInput.detail,
+        source: InputFileLabel.AMEX_CREDIT,
+        transactionInfo: capitalOneInput.description,
       };
       return financeRow;
     });
     return financeRows;
   }
 
-  parse(input: string): CapitalOneCreditParserInputRow[] {
-    const rows: CapitalOneCreditParserInputRow[] = [];
+  parse(input: string): AmexCreditParserInputRow[] {
+    const rows: AmexCreditParserInputRow[] = [];
 
     Papa.parse(input, {
       header: false,
@@ -40,8 +40,8 @@ export default class CapitalOneCreditParser implements IParser<string, CapitalOn
         data.forEach(row => {
           rows.push({
             date: cleanDate(row[0]),
-            amount: -1 * cleanNumber(row[5]),
-            detail: row[3],
+            description: row[1],
+            amount: -1 * cleanNumber(row[2]),
           });
         });
       },
