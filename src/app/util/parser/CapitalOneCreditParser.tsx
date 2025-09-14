@@ -40,7 +40,7 @@ export default class CapitalOneCreditParser implements IParser<string, CapitalOn
         data.forEach(row => {
           rows.push({
             date: cleanDate(row[0]),
-            amount: -1 * cleanNumber(row[5]),
+            amount: row[5] !== "" ? -1 * cleanNumber(row[5]) : cleanNumber(row[6]),
             detail: row[3],
           });
         });
