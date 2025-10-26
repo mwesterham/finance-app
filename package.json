@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/mwesterham/finance-app.git"
   },
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Finance app which aides in financial analysis",
   "main": ".webpack/main",
   "scripts": {
