@@ -31,6 +31,7 @@ import WithTooltip from '../components/WithTooltip';
 import { epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
+import { TableCell } from '../components/tablecell/TableCell';
 
 
 declare module '@tanstack/react-table' {
@@ -53,7 +54,10 @@ const getColumns = (
 ) => [
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
-    cell: info => epochToDateStr(info.getValue()),
+    cell: info =>
+      <TableCell>
+        {epochToDateStr(info.getValue())}
+      </TableCell>,
     header: ({ column }) => <span>{"Date"}</span>,
     footer: ({ column }) => <span>{"Date"}</span>,
     meta: {
@@ -62,7 +66,12 @@ const getColumns = (
   }),
   columnHelper.accessor('amount', {
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
-    cell: info => <div className={info.getValue() < 0 ? "text-red-500" : ""}>{formatAmount(info.getValue())}</div>,
+    cell: info =>
+      <TableCell>
+        <div className={info.getValue() < 0 ? "text-red-500" : ""}>
+          {formatAmount(info.getValue())}
+        </div>
+      </TableCell>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'range',
@@ -84,13 +93,15 @@ const getColumns = (
       };
 
       return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          suggestions={suggestedCategories}
-          onChange={onChange}
-        />
+        <TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            suggestions={suggestedCategories}
+            onChange={onChange}
+          />
+        </TableCell>
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -121,13 +132,15 @@ const getColumns = (
       };
 
       return <>
-        <EditableInput
-          value={value}
-          type="text"
-          suggestions={providedDetailOptions}
-          displayBody={<>{value}</>}
-          onChange={onChange}
-        />
+        <TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            suggestions={providedDetailOptions}
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
+        </TableCell>
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -137,14 +150,20 @@ const getColumns = (
     },
   }),
   columnHelper.accessor('transactionId', {
-    cell: info => info.getValue(),
+    cell: info =>
+      <TableCell>
+        {info.getValue()}
+      </TableCell>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'select',
     },
   }),
   columnHelper.accessor('transactionInfo', {
-    cell: info => info.getValue(),
+    cell: info =>
+      <TableCell>
+        {info.getValue()}
+      </TableCell>,
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
@@ -152,7 +171,10 @@ const getColumns = (
     },
   }),
   columnHelper.accessor('source', {
-    cell: info => info.getValue(),
+    cell: info =>
+      <TableCell>
+        {info.getValue()}
+      </TableCell>,
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
@@ -293,7 +315,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                 Manage
               </th>
               {headerGroup.headers.map(header => (<>
-                <th key={header.id} colSpan={header.colSpan} className="px-4 py-2 text-left">
+                <th key={header.id} colSpan={header.colSpan} className="text-left">
                   {header.isPlaceholder ? null : (
                     <div className='flex items-center'>
                       <span className={cx(`${header.column.getCanSort() ? 'cursor-pointer' : ''}`, 'pr-2')} onClick={header.column.getToggleSortingHandler()}>
@@ -321,7 +343,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                   "border-b"
                 )}
               >
-                <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
+                <td key={`${row.id}-custom-1`} className="border-r border-gray-300">
                   <span className="flex flex-grow items-center justify-center space-x-2">
                     <WithTooltip text='Create Rule' position='left'>
                       <MdAssignmentAdd
@@ -332,7 +354,7 @@ export const RuleBasedCategorizer = (props: RuleBasedCategorizerProps) => {
                   </span>
                 </td>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
+                  <td key={cell.id} className="border-r border-gray-300 group hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

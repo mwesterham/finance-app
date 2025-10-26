@@ -35,6 +35,7 @@ import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
+import { TableCell } from '../components/tablecell/TableCell';
 
 
 declare module '@tanstack/react-table' {
@@ -85,12 +86,14 @@ const getColumns = (
         };
 
         return <>
-          <EditableInput
-            value={epochToDateStr(value)}
-            type="date"
-            displayBody={<>{customFormatDate(value)}</>}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              value={epochToDateStr(value)}
+              type="date"
+              displayBody={<>{customFormatDate(value)}</>}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       header: ({ column }) => <span>{"Date"}</span>,
@@ -128,12 +131,14 @@ const getColumns = (
         const amt = formatAmount(value);
 
         return <>
-          <EditableInput
-            value={value}
-            type="number"
-            displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              value={value}
+              type="number"
+              displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -161,13 +166,15 @@ const getColumns = (
         };
 
         return <>
-          <EditableInput
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            suggestions={suggestedCategories}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              value={value}
+              type="text"
+              displayBody={<>{value}</>}
+              suggestions={suggestedCategories}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -202,13 +209,15 @@ const getColumns = (
         };
 
         return <>
-          <EditableInput
-            suggestions={providedDetailOptions}
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              suggestions={providedDetailOptions}
+              value={value}
+              type="text"
+              displayBody={<>{value}</>}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -236,12 +245,14 @@ const getColumns = (
         };
 
         return <>
-          <EditableInput
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              value={value}
+              type="text"
+              displayBody={<>{value}</>}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -269,13 +280,15 @@ const getColumns = (
         };
 
         return <>
-          <EditableInput
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            suggestions={getPossibleValuesFromCol(column)}
-            onChange={onChange}
-          />
+          <TableCell>
+            <EditableInput
+              value={value}
+              type="text"
+              displayBody={<>{value}</>}
+              suggestions={getPossibleValuesFromCol(column)}
+              onChange={onChange}
+            />
+          </TableCell>
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -468,7 +481,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
                   `${deletedRows.includes(Number(row.original.transactionId)) ? 'delete-animation' : ''}`
                 )}
               >
-                <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
+                <td key={`${row.id}-custom-1`} className="border-r border-gray-300">
                   <span className="flex flex-grow items-center justify-center space-x-2">
                     <WithTooltip text='Delete' position='left'>
                       <ConfirmAction
@@ -504,7 +517,7 @@ export const TanstackDataTable = (props: TanstackDataTableProps) => {
                   </span>
                 </td>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
+                  <td key={cell.id} className="border-r border-gray-300 group hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

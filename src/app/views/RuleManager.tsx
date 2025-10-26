@@ -35,6 +35,7 @@ import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
 import RuleDetails from '../components/RuleDetails';
+import { TableCell } from '../components/tablecell/TableCell';
 
 
 declare module '@tanstack/react-table' {
@@ -82,12 +83,14 @@ const getColumns = (
       };
 
       return <>
-        <EditableInput
-          value={value}
-          type="text"
-          displayBody={<>{value}</>}
-          onChange={onChange}
-        />
+        <TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
+        </TableCell>
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -390,7 +393,7 @@ export const RuleManager = (props: RuleManagerProps) => {
                   `${deletedRows.includes(Number(row.original.ruleId)) ? 'delete-animation' : ''}`
                 )}
               >
-                <td key={`${row.id}-custom-1`} className="px-4 py-2 border-r border-gray-300">
+                <td key={`${row.id}-custom-1`} className="border-r border-gray-300">
                   <span className="flex flex-grow items-center justify-center space-x-2">
                     <WithTooltip text='Delete' position='top'>
                       <ConfirmAction
@@ -406,7 +409,7 @@ export const RuleManager = (props: RuleManagerProps) => {
                   </span>
                 </td>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-2 border-r border-gray-300 group hover:bg-gray-50">
+                  <td key={cell.id} className="border-r border-gray-300 group hover:bg-gray-50">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
