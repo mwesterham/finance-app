@@ -33,8 +33,7 @@ export enum InputFileLabel {
   RULES_EXPORT = "Rules Exported",
 }
 
-interface MultiFileUploaderProps {
-}
+interface MultiFileUploaderProps { }
 
 export default function MultiFileUploader(props: MultiFileUploaderProps) {
   const checkingParser = new CheckingParser();
@@ -51,6 +50,7 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -84,68 +84,77 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   };
 
   const handleMultiFileSubmit = async (files: LabeledFile[]) => {
-    for (const { file, label, identifier } of files) {
-      const text = await file.text();
-      let rows: FinanceSheetRow[] | undefined;
+    setIsSubmitting(true); // Show modal and block UI
+    try {
+      for (const { file, label, identifier } of files) {
+        const text = await file.text();
+        let rows: FinanceSheetRow[] | undefined;
 
-      switch (label) {
-        case InputFileLabel.WELLS_FARGO_CHECKING:
-          rows = checkingParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.WELLS_FARGO_CREDIT:
-          rows = creditParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.VENMO:
-          rows = venmoParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.CAPITAL_ONE_CREDIT:
-          rows = capitalOneCreditParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.AMEX_CREDIT:
-          rows = amexCreditParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
-          rows = matthewVenmoSnapshotParser.toFinanceRows({
-            text,
-            label: InputFileLabel.VENMO,
-          });
-          break;
-        case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT:
-          rows = matthewCreditSnapshotParser.toFinanceRows({
-            text,
-            label: InputFileLabel.WELLS_FARGO_CREDIT,
-          });
-          break;
-        case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING:
-          rows = matthewCheckingSnapshotParser.toFinanceRows({
-            text,
-            label: InputFileLabel.WELLS_FARGO_CHECKING,
-          });
-          break;
-        case InputFileLabel.DISCOVER:
-          rows = discoverParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.EXPORT:
-          rows = exportParser.toFinanceRows(text);
-          break;
-        case InputFileLabel.RULES_EXPORT:
-          const rules = rulesExportParser.parse(text);
-          await DatabaseService.writeRuleToDatabase({ rules });
-          continue;
-        default:
-          console.log(`Invalid label ${label}`);
-          continue;
+        switch (label) {
+          case InputFileLabel.WELLS_FARGO_CHECKING:
+            rows = checkingParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.WELLS_FARGO_CREDIT:
+            rows = creditParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.VENMO:
+            rows = venmoParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.CAPITAL_ONE_CREDIT:
+            rows = capitalOneCreditParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.AMEX_CREDIT:
+            rows = amexCreditParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
+            rows = matthewVenmoSnapshotParser.toFinanceRows({
+              text,
+              label: InputFileLabel.VENMO,
+            });
+            break;
+          case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT:
+            rows = matthewCreditSnapshotParser.toFinanceRows({
+              text,
+              label: InputFileLabel.WELLS_FARGO_CREDIT,
+            });
+            break;
+          case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING:
+            rows = matthewCheckingSnapshotParser.toFinanceRows({
+              text,
+              label: InputFileLabel.WELLS_FARGO_CHECKING,
+            });
+            break;
+          case InputFileLabel.DISCOVER:
+            rows = discoverParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.EXPORT:
+            rows = exportParser.toFinanceRows(text);
+            break;
+          case InputFileLabel.RULES_EXPORT:
+            const rules = rulesExportParser.parse(text);
+            await DatabaseService.writeRuleToDatabase({ rules });
+            continue;
+          default:
+            console.log(`Invalid label ${label}`);
+            continue;
+        }
+
+        if (rows) {
+          const fullSource =
+            identifier && identifier.length > 0 ? `${label} | ${identifier}` : label;
+          rows = rows.map((row) => ({
+            ...row,
+            source: fullSource,
+          }));
+
+          // 🔹 Wrap DB write with loading modal state
+          await DatabaseService.writeRowToDatabaseIfMissing({ rows });
+        }
       }
-
-      if (rows) {
-        const fullSource = identifier !== undefined && identifier.length > 0 ? `${label} | ${identifier}` : label;
-        rows = rows.map((row) => ({
-          ...row,
-          source: fullSource,
-        }));
-
-        await DatabaseService.writeRowToDatabaseIfMissing({ rows });
-      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false); // Hide modal after all operations
     }
   };
 
@@ -158,71 +167,98 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
   };
 
   const getRecommendedFileType = (fileName: string): InputFileLabel => {
-    if (fileName.toLowerCase().includes("checking")) {
-      return InputFileLabel.WELLS_FARGO_CHECKING;
-    } else if (fileName.toLowerCase().includes("credit")) {
-      return InputFileLabel.WELLS_FARGO_CREDIT;
-    } else if (fileName.toLowerCase().includes("venmo")) {
-      return InputFileLabel.VENMO;
-    } else if (fileName.toLowerCase().includes("_transaction_download")) {
-      return InputFileLabel.CAPITAL_ONE_CREDIT;
-    } else if (fileName.toLowerCase().includes("discover")) {
-      return InputFileLabel.DISCOVER;
-    } else if (fileName.toLowerCase().includes("activity.csv")) {
-      return InputFileLabel.AMEX_CREDIT;
-    } else if (
-      fileName.toLowerCase().includes("finance_app-transactions") ||
-      fileName.toLowerCase().includes("finance_app-filtered-transactions")
-    ) {
-      return InputFileLabel.EXPORT;
-    } else if (fileName.toLowerCase().includes("finance_app-rules")) {
-      return InputFileLabel.RULES_EXPORT;
-    } else {
-      return InputFileLabel.WELLS_FARGO_CHECKING;
-    }
-  }
+    const lower = fileName.toLowerCase();
+    if (lower.includes("checking")) return InputFileLabel.WELLS_FARGO_CHECKING;
+    if (lower.includes("credit")) return InputFileLabel.WELLS_FARGO_CREDIT;
+    if (lower.includes("venmo")) return InputFileLabel.VENMO;
+    if (lower.includes("_transaction_download")) return InputFileLabel.CAPITAL_ONE_CREDIT;
+    if (lower.includes("discover")) return InputFileLabel.DISCOVER;
+    if (lower.includes("activity.csv")) return InputFileLabel.AMEX_CREDIT;
+    if (lower.includes("finance_app-transactions") || lower.includes("finance_app-filtered-transactions")) return InputFileLabel.EXPORT;
+    if (lower.includes("finance_app-rules")) return InputFileLabel.RULES_EXPORT;
+    return InputFileLabel.WELLS_FARGO_CHECKING;
+  };
 
-  return <>
-    <div className="p-4 border rounded-lg shadow-md space-y-4 bg-white">
-      <label className="font-semibold block">Import Files</label>
-      <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="block w-full border p-2 rounded" />
-
-      <div className="space-y-2">
-        {files.map((file, index) => (
-          <div key={index} className="flex items-center gap-2 border p-2 rounded-lg">
-            <button
-              onClick={() => handleRemoveFile(index)}
-              className="text-red-500 hover:text-red-700 p-1"
+  return (
+    <>
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <svg
+              className="animate-spin h-12 w-12 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              X
-            </button>
-            <select
-              value={file.label}
-              onChange={(e) => handleLabelChange(index, e.target.value as InputFileLabel)}
-              className="p-1 border rounded-md"
-            >
-              {Object.values(InputFileLabel).map((label) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <input
-              disabled={file.label == InputFileLabel.RULES_EXPORT ? true : false}
-              type="text"
-              value={file.identifier || ""}
-              onChange={(e) => handleIdentifierChange(index, e.target.value)}
-              placeholder="Source Id (optional)"
-              className="p-1 border rounded-md"
-            />
-            <span className="truncate">{file.file.name}</span>
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+            <span className="mt-2 text-white font-semibold">Submitting...</span>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <button onClick={handleSubmit} className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-        Submit
-      </button>
-    </div>
-  </>;
+      <div className="p-4 border rounded-lg shadow-md space-y-4 bg-white">
+        <label className="font-semibold block">Import Files</label>
+        <input
+          type="file"
+          ref={fileInputRef}
+          multiple
+          onChange={handleFileChange}
+          className="block w-full border p-2 rounded"
+        />
+
+        <div className="space-y-2">
+          {files.map((file, index) => (
+            <div key={index} className="flex items-center gap-2 border p-2 rounded-lg">
+              <button
+                onClick={() => handleRemoveFile(index)}
+                className="text-red-500 hover:text-red-700 p-1"
+              >
+                X
+              </button>
+              <select
+                value={file.label}
+                onChange={(e) => handleLabelChange(index, e.target.value as InputFileLabel)}
+                className="p-1 border rounded-md"
+              >
+                {Object.values(InputFileLabel).map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <input
+                disabled={file.label === InputFileLabel.RULES_EXPORT}
+                type="text"
+                value={file.identifier || ""}
+                onChange={(e) => handleIdentifierChange(index, e.target.value)}
+                placeholder="Source Id (optional)"
+                className="p-1 border rounded-md"
+              />
+              <span className="truncate">{file.file.name}</span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+        >
+          Submit
+        </button>
+      </div>
+    </>
+  );
 }

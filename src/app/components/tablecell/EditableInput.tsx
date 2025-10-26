@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { GoCheck, GoX } from "react-icons/go";
 import { cx } from "../../util/util";
+import { SuggestionDropdown } from "../SuggestionDropdown";
 
 interface EditableInputProps {
   value: any;
@@ -87,6 +88,12 @@ const EditableInput = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      // toggle editing off completely
+      setIsEditing(false);
+      return;
+    }
+
     if (filteredSuggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -104,14 +111,15 @@ const EditableInput = ({
       } else {
         handleSave();
       }
-    } else if (e.key === "Escape") {
-      handleCancel();
     }
   };
 
   return (
     <div
-      className={cx("relative flex items-center w-full group h-16 px-2", !isEditing ? "cursor-pointer" : "")}
+      className={cx(
+        "relative flex flex-col w-full group h-16 px-2 overflow-auto scrollbar-hide",
+        !isEditing ? "cursor-pointer" : ""
+      )}
       onClick={!isEditing ? handleClickEdit : undefined}
     >
       {isEditing ? (
@@ -135,26 +143,18 @@ const EditableInput = ({
             />
           </div>
 
-          {filteredSuggestions.length > 0 && (
-            <ul className="absolute top-full mt-1 z-10 w-full bg-white border rounded shadow max-h-40 overflow-y-auto">
-              {filteredSuggestions.map((s, idx) => (
-                <li
-                  key={idx}
-                  ref={(el) => { suggestionRefs.current[idx] = el; }}
-                  className={`px-3 py-1 cursor-pointer ${
-                    highlightedIndex === idx ? "bg-blue-200" : "hover:bg-blue-100"
-                  }`}
-                  onMouseDown={() => handleSuggestionClick(s)}
-                  onMouseUp={() => setFilteredSuggestions([])}
-                >
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
+          <SuggestionDropdown
+            inputRef={inputRef}
+            suggestions={filteredSuggestions}
+            highlightedIndex={highlightedIndex}
+            onSelect={(s) => {
+              handleSuggestionClick(s);
+              setFilteredSuggestions([]);
+            }}
+          />
         </div>
       ) : (
-        <div className="flex items-center w-full justify-between h-full">
+        <div className="flex w-full justify-between h-full">
           <span>{displayBody}</span>
         </div>
       )}

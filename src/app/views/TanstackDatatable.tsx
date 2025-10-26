@@ -35,7 +35,6 @@ import TransactionDetails from '../components/TransactionDetails';
 import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
-import { TableCell } from '../components/tablecell/ReadOnlyCell';
 
 
 declare module '@tanstack/react-table' {
@@ -86,14 +85,12 @@ const getColumns = (
         };
 
         return <>
-          <TableCell>
-            <EditableInput
-              value={epochToDateStr(value)}
-              type="date"
-              displayBody={<>{customFormatDate(value)}</>}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            value={epochToDateStr(value)}
+            type="date"
+            displayBody={<>{customFormatDate(value)}</>}
+            onChange={onChange}
+          />
         </>;
       },
       header: ({ column }) => <span>{"Date"}</span>,
@@ -131,14 +128,12 @@ const getColumns = (
         const amt = formatAmount(value);
 
         return <>
-          <TableCell>
-            <EditableInput
-              value={value}
-              type="number"
-              displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            value={value}
+            type="number"
+            displayBody={<div className={value < 0 ? "text-red-500" : ""}>{amt}</div>}
+            onChange={onChange}
+          />
         </>;
       },
       footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -166,15 +161,13 @@ const getColumns = (
         };
 
         return <>
-          <TableCell>
-            <EditableInput
-              value={value}
-              type="text"
-              displayBody={<>{value}</>}
-              suggestions={suggestedCategories}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            suggestions={suggestedCategories}
+            onChange={onChange}
+          />
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -209,15 +202,13 @@ const getColumns = (
         };
 
         return <>
-          <TableCell>
-            <EditableInput
-              suggestions={providedDetailOptions}
-              value={value}
-              type="text"
-              displayBody={<>{value}</>}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            suggestions={providedDetailOptions}
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -245,14 +236,12 @@ const getColumns = (
         };
 
         return <>
-          <TableCell>
-            <EditableInput
-              value={value}
-              type="text"
-              displayBody={<>{value}</>}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            onChange={onChange}
+          />
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -280,15 +269,13 @@ const getColumns = (
         };
 
         return <>
-          <TableCell>
-            <EditableInput
-              value={value}
-              type="text"
-              displayBody={<>{value}</>}
-              suggestions={getPossibleValuesFromCol(column)}
-              onChange={onChange}
-            />
-          </TableCell>
+          <EditableInput
+            value={value}
+            type="text"
+            displayBody={<>{value}</>}
+            suggestions={getPossibleValuesFromCol(column)}
+            onChange={onChange}
+          />
         </>;
       },
       header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,

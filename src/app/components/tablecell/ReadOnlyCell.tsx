@@ -1,18 +1,18 @@
 import React from "react";
 
-type TableCellProps = {
+type ReadOnlyCellProps = {
   children?: React.ReactNode;
   className?: string;
 };
 
-export const TableCell = ({
+export const ReadOnlyCell = ({
   children,
   className = "",
   ...rest
-}: TableCellProps) => {
+}: ReadOnlyCellProps) => {
   return (
     <div
-      className={`flex items-center ${className}`}
+      className={`relative flex flex-col w-full group h-16 px-2 overflow-auto scrollbar-hide ${className}`}
       {...rest}
     >
       {children}

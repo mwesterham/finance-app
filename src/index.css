@@ -41,3 +41,13 @@
     background-color: rgb(255, 183, 183);  /* Choose your highlight color */
   }
 }
+
+/* hide scrollbars while keeping scrollable content */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

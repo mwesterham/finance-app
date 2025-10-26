@@ -31,7 +31,7 @@ import WithTooltip from '../components/WithTooltip';
 import { epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
-import { TableCell } from '../components/tablecell/ReadOnlyCell';
+import { ReadOnlyCell } from '../components/tablecell/ReadOnlyCell';
 
 
 declare module '@tanstack/react-table' {
@@ -55,9 +55,9 @@ const getColumns = (
   columnHelper.accessor(row => row.epoch, {
     id: 'epoch',
     cell: info =>
-      <TableCell>
+      <ReadOnlyCell>
         {epochToDateStr(info.getValue())}
-      </TableCell>,
+      </ReadOnlyCell>,
     header: ({ column }) => <span>{"Date"}</span>,
     footer: ({ column }) => <span>{"Date"}</span>,
     meta: {
@@ -67,11 +67,11 @@ const getColumns = (
   columnHelper.accessor('amount', {
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     cell: info =>
-      <TableCell>
+      <ReadOnlyCell>
         <div className={info.getValue() < 0 ? "text-red-500" : ""}>
           {formatAmount(info.getValue())}
         </div>
-      </TableCell>,
+      </ReadOnlyCell>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'range',
@@ -93,15 +93,13 @@ const getColumns = (
       };
 
       return <>
-        <TableCell>
-          <EditableInput
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            suggestions={suggestedCategories}
-            onChange={onChange}
-          />
-        </TableCell>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          suggestions={suggestedCategories}
+          onChange={onChange}
+        />
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -132,15 +130,13 @@ const getColumns = (
       };
 
       return <>
-        <TableCell>
-          <EditableInput
-            value={value}
-            type="text"
-            suggestions={providedDetailOptions}
-            displayBody={<>{value}</>}
-            onChange={onChange}
-          />
-        </TableCell>
+        <EditableInput
+          value={value}
+          type="text"
+          suggestions={providedDetailOptions}
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
@@ -151,9 +147,9 @@ const getColumns = (
   }),
   columnHelper.accessor('transactionId', {
     cell: info =>
-      <TableCell>
+      <ReadOnlyCell>
         {info.getValue()}
-      </TableCell>,
+      </ReadOnlyCell>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
       filterVariant: 'select',
@@ -161,9 +157,9 @@ const getColumns = (
   }),
   columnHelper.accessor('transactionInfo', {
     cell: info =>
-      <TableCell>
+      <ReadOnlyCell>
         {info.getValue()}
-      </TableCell>,
+      </ReadOnlyCell>,
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {
@@ -172,9 +168,9 @@ const getColumns = (
   }),
   columnHelper.accessor('source', {
     cell: info =>
-      <TableCell>
+      <ReadOnlyCell>
         {info.getValue()}
-      </TableCell>,
+      </ReadOnlyCell>,
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     footer: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
     meta: {

@@ -22,7 +22,6 @@ import {
   MdKeyboardArrowLeft,
   MdDeleteForever
 } from "react-icons/md";
-import { IoDuplicate } from "react-icons/io5";
 import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -30,12 +29,9 @@ import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAm
 import EditableInput from '../components/tablecell/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
-import TransactionDetails from '../components/TransactionDetails';
-import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
 import RuleDetails from '../components/RuleDetails';
-import { TableCell } from '../components/tablecell/ReadOnlyCell';
 
 
 declare module '@tanstack/react-table' {
@@ -83,14 +79,12 @@ const getColumns = (
       };
 
       return <>
-        <TableCell>
-          <EditableInput
-            value={value}
-            type="text"
-            displayBody={<>{value}</>}
-            onChange={onChange}
-          />
-        </TableCell>
+        <EditableInput
+          value={value}
+          type="text"
+          displayBody={<>{value}</>}
+          onChange={onChange}
+        />
       </>;
     },
     header: ({ column }) => <span>{prettyPrintString(column.id)}</span>,
