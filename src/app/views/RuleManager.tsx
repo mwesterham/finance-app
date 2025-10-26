@@ -27,7 +27,7 @@ import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAmount, getPossibleValuesFromCol, prettyPrintString } from '../util/util';
-import EditableInput from '../components/EditableInput';
+import EditableInput from '../components/tablecell/EditableInput';
 import ConfirmAction from '../components/ConfirmAction';
 import WithTooltip from '../components/WithTooltip';
 import TransactionDetails from '../components/TransactionDetails';
@@ -35,7 +35,7 @@ import { customFormatDate, epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
 import RuleDetails from '../components/RuleDetails';
-import { TableCell } from '../components/tablecell/TableCell';
+import { TableCell } from '../components/tablecell/ReadOnlyCell';
 
 
 declare module '@tanstack/react-table' {

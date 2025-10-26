@@ -12,7 +12,7 @@ export const TableCell = ({
 }: TableCellProps) => {
   return (
     <div
-      className={`flex items-center px-4 py-2 ${className}`}
+      className={`flex items-center ${className}`}
       {...rest}
     >
       {children}

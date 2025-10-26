@@ -1,5 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
-import { GoPencil, GoCheck, GoX } from "react-icons/go";
+import { ReactNode, useEffect, useState, useRef } from "react";
+import { GoCheck, GoX } from "react-icons/go";
 
 interface EditableInputProps {
   value: any;
@@ -21,11 +21,22 @@ const EditableInput = ({
   const [initialValue, setInitialValue] = useState(value);
   const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>(suggestions);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update values when prop changes
   useEffect(() => {
     setIsEditing(false);
     setInputValue(value);
     setInitialValue(value);
   }, [value]);
+
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select(); // Optional: select text
+    }
+  }, [isEditing]);
 
   const handleClickEdit = () => {
     setIsEditing(true);
@@ -39,9 +50,9 @@ const EditableInput = ({
   };
 
   const handleSave = () => {
-    onChange(inputValue === "" ? undefined : inputValue); // Commit the change
+    onChange(inputValue === "" ? undefined : inputValue);
     setIsEditing(false);
-    setInitialValue(inputValue === "" ? undefined : inputValue); // Set new initial value
+    setInitialValue(inputValue === "" ? undefined : inputValue);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,15 +72,18 @@ const EditableInput = ({
   };
 
   return (
-    <div className="relative flex items-center w-full group">
+    <div
+      className="relative flex items-center w-full group h-16 px-2"
+      onClick={!isEditing ? handleClickEdit : undefined}
+    >
       {isEditing ? (
         <div className="flex flex-col w-full">
           <div className="flex items-center space-x-2">
             <input
+              ref={inputRef}
               value={inputValue}
               type={type}
               onChange={handleChange}
-              onFocus={() => suggestions.length > 0}
               className="border rounded px-2 py-1 flex-grow"
             />
             <GoCheck
@@ -97,12 +111,8 @@ const EditableInput = ({
           )}
         </div>
       ) : (
-        <div className="flex items-center w-full justify-between">
+        <div className="flex items-center w-full justify-between h-full">
           <span>{displayBody}</span>
-          <GoPencil
-            className="opacity-0 group-hover:opacity-100 text-blue-500 cursor-pointer hover:text-blue-700 min-w-5"
-            onClick={handleClickEdit}
-          />
         </div>
       )}
     </div>

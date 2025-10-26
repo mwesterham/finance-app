@@ -26,12 +26,12 @@ import { RowData } from "@tanstack/react-table";
 import Filter from '../components/Filter';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { cx, fetchUniqueCategoriesForTable, fetchUniqueDetailsForTable, formatAmount, prettyPrintString, ruleFromFinanceRow } from '../util/util';
-import EditableInput from '../components/EditableInput';
+import EditableInput from '../components/tablecell/EditableInput';
 import WithTooltip from '../components/WithTooltip';
 import { epochToDateStr } from '../util/time';
 import DatabaseService from "../util/DatabaseService";
 import { RuleForm } from '../components/RuleForm';
-import { TableCell } from '../components/tablecell/TableCell';
+import { TableCell } from '../components/tablecell/ReadOnlyCell';
 
 
 declare module '@tanstack/react-table' {
