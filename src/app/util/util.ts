@@ -22,15 +22,30 @@ export const prettyPrintString = (str: string): string => {
 
 
 export const cleanDate = (str: string): Date => {
-  // Check if the string matches the ISO 8601 format
+  // Check if the string matches the ISO 8601 format with time
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(str)) {
     const date = new Date(str);
     date.setHours(0, 0, 0, 0);
     return date;
   }
 
+  // Check if the string matches YYYY-MM-DD format (date only)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [year, month, day] = str.split('-').map(Number);
+    // Create date in local timezone to avoid timezone shift issues
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+    return date;
+  }
+
   // Fallback for other date formats (removes unwanted characters)
   const cleanedStr = str.replace(/[^0-9/-]/g, "").trim();
+  
+  // Try to parse as YYYY-MM-DD or MM/DD/YYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanedStr)) {
+    const [year, month, day] = cleanedStr.split('-').map(Number);
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  }
+  
   const date = new Date(cleanedStr);
   date.setHours(0, 0, 0, 0);
   return date;
