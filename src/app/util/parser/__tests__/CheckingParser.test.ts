@@ -10,7 +10,7 @@ describe("CheckingParser", () => {
 
   describe("parse", () => {
     it("should parse Amazon direct deposit with correct date and amount", () => {
-      const input = `"04/11/2025","4142.66","*","","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW"`;
+      const input = `"04/11/2025","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW","4142.66","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -23,7 +23,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse ATM withdrawal as negative amount", () => {
-      const input = `"04/07/2025","-1000.00","*","","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042"`;
+      const input = `"04/07/2025","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042","-1000.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -33,7 +33,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse IRS tax refund", () => {
-      const input = `"04/07/2025","364.00","*","","IRS TREAS 310 TAX REF 040725 XXXXXXXXXX00989 REF*WEST*FRESNO*12/2024*TAX REFUND*30"`;
+      const input = `"04/07/2025","IRS TREAS 310 TAX REF 040725 XXXXXXXXXX00989 REF*WEST*FRESNO*12/2024*TAX REFUND*30","364.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -43,7 +43,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse credit card auto payment", () => {
-      const input = `"04/04/2025","-2728.18","*","","WF Credit Card AUTO PAY 250404 90143425376771 WESTERHAM,MATTHEW K"`;
+      const input = `"04/04/2025","WF Credit Card AUTO PAY 250404 90143425376771 WESTERHAM,MATTHEW K","-2728.18","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -53,7 +53,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse Zelle transfer", () => {
-      const input = `"03/17/2025","-50.00","*","","ZELLE TO VAN BRENDON ON 03/16 REF #RP0YMH6TR6 3 LESSONS MISSED BADMINTON"`;
+      const input = `"03/17/2025","ZELLE TO VAN BRENDON ON 03/16 REF #RP0YMH6TR6 3 LESSONS MISSED BADMINTON","-50.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -66,7 +66,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse Venmo cashout", () => {
-      const input = `"03/18/2025","120.00","*","","VENMO CASHOUT 250318 1040959411377 MATTHEW WESTERHAM"`;
+      const input = `"03/18/2025","VENMO CASHOUT 250318 1040959411377 MATTHEW WESTERHAM","120.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -76,9 +76,9 @@ describe("CheckingParser", () => {
     });
 
     it("should parse multiple transactions correctly", () => {
-      const input = `"04/11/2025","4142.66","*","","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW"
-"04/07/2025","-1000.00","*","","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042"
-"04/07/2025","364.00","*","","IRS TREAS 310 TAX REF 040725 XXXXXXXXXX00989 REF*WEST*FRESNO*12/2024*TAX REFUND*30"`;
+      const input = `"04/11/2025","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW","4142.66","","Posted"
+"04/07/2025","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042","-1000.00","","Posted"
+"04/07/2025","IRS TREAS 310 TAX REF 040725 XXXXXXXXXX00989 REF*WEST*FRESNO*12/2024*TAX REFUND*30","364.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -89,7 +89,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse Wells Fargo rewards", () => {
-      const input = `"03/14/2025","75.00","*","","WELLS FARGO REWARDS"`;
+      const input = `"03/14/2025","WELLS FARGO REWARDS","75.00","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -99,7 +99,7 @@ describe("CheckingParser", () => {
     });
 
     it("should parse gym membership fee", () => {
-      const input = `"03/25/2025","-26.99","*","","EOS FITNESS ABC CLUB FEES 2508300289006 - EOS FITNESS 888-827-9262"`;
+      const input = `"03/25/2025","EOS FITNESS ABC CLUB FEES 2508300289006 - EOS FITNESS 888-827-9262","-26.99","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -111,7 +111,7 @@ describe("CheckingParser", () => {
 
   describe("toFinanceRows", () => {
     it("should convert parsed data to FinanceSheetRow format", () => {
-      const input = `"04/11/2025","4142.66","*","","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW"`;
+      const input = `"04/11/2025","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW","4142.66","","Posted"`;
 
       const result = parser.toFinanceRows(input);
 
@@ -126,26 +126,26 @@ describe("CheckingParser", () => {
     });
 
     it("should handle multiple transactions", () => {
-      const input = `"04/11/2025","4142.66","*","","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW"
-"04/07/2025","-1000.00","*","","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042"
-"03/17/2025","-50.00","*","","ZELLE TO VAN BRENDON ON 03/16 REF #RP0YMH6TR6 3 LESSONS MISSED BADMINTON"`;
+      const input = `"04/11/2025","AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW","4142.66","","Posted"
+"04/07/2025","ATM WITHDRAWAL AUTHORIZED ON 04/06 3495 W Chandler Blvd Chandler AZ 0004840 ATM ID 9986V CARD 3042","-1000.00","","Posted"
+"03/17/2025","ZELLE TO VAN BRENDON ON 03/16 REF #RP0YMH6TR6 3 LESSONS MISSED BADMINTON","-50.00","","Posted"`;
 
       const result = parser.toFinanceRows(input);
 
       expect(result).toHaveLength(3);
-      
+
       // First transaction
       const date1 = new Date(result[0].epoch);
       expect(date1.getMonth()).toBe(3); // April
       expect(date1.getDate()).toBe(11);
       expect(result[0].amount).toBe(4142.66);
-      
+
       // Second transaction
       const date2 = new Date(result[1].epoch);
       expect(date2.getMonth()).toBe(3); // April
       expect(date2.getDate()).toBe(7);
       expect(result[1].amount).toBe(-1000.00);
-      
+
       // Third transaction
       const date3 = new Date(result[2].epoch);
       expect(date3.getMonth()).toBe(2); // March

@@ -10,7 +10,7 @@ describe("CreditParser", () => {
 
   describe("parse", () => {
     it("should parse restaurant purchase with correct date and amount", () => {
-      const input = `"02/07/2026","-30.95","*","","SP SMOKO INC. SMOKONOW.COM CA"`;
+      const input = `"02/07/2026","SP SMOKO INC. SMOKONOW.COM CA","-30.95","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -23,7 +23,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse automatic payment as positive amount", () => {
-      const input = `"02/04/2026","1041.29","*","","AUTOMATIC PAYMENT - THANK YOU"`;
+      const input = `"02/04/2026","AUTOMATIC PAYMENT - THANK YOU","1041.29","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -33,7 +33,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Costco purchase", () => {
-      const input = `"02/04/2026","-133.14","*","","COSTCO WHSE #0436 TEMPE AZ"`;
+      const input = `"02/04/2026","COSTCO WHSE #0436 TEMPE AZ","-133.14","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -43,7 +43,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Amazon marketplace purchase", () => {
-      const input = `"02/02/2026","-77.97","*","","AMAZON MKTPL*3K1TO1RM3 Amzn.com/billWA"`;
+      const input = `"02/02/2026","AMAZON MKTPL*3K1TO1RM3 Amzn.com/billWA","-77.97","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -53,7 +53,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse gas station purchase", () => {
-      const input = `"02/02/2026","-28.71","*","","FRYS FUEL #7628 PHOENIX AZ"`;
+      const input = `"02/02/2026","FRYS FUEL #7628 PHOENIX AZ","-28.71","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -63,7 +63,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Kiro Pro subscription", () => {
-      const input = `"02/01/2026","-21.82","*","","KIRO PRO KIRO.DEV WA"`;
+      const input = `"02/01/2026","KIRO PRO KIRO.DEV WA","-21.82","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -73,7 +73,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse DoorDash purchase", () => {
-      const input = `"01/28/2026","-28.05","*","","DD *DOORDASH GREENCORN DOORDASH.COM CA"`;
+      const input = `"01/28/2026","DD *DOORDASH GREENCORN DOORDASH.COM CA","-28.05","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -86,7 +86,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Steam purchase", () => {
-      const input = `"01/28/2026","-12.83","*","","WL *Steam Purchase 425-9522985 WA"`;
+      const input = `"01/28/2026","WL *Steam Purchase 425-9522985 WA","-12.83","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -96,7 +96,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse large purchase (jewelry)", () => {
-      const input = `"01/11/2026","-1985.62","*","","Brilliant Earth San FranciscoCA"`;
+      const input = `"01/11/2026","Brilliant Earth San FranciscoCA","-1985.62","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -106,7 +106,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Delta Air purchase", () => {
-      const input = `"01/04/2026","-116.99","*","","DELTA AIR 0062392751882800-2211212 CA"`;
+      const input = `"01/04/2026","DELTA AIR 0062392751882800-2211212 CA","-116.99","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -116,7 +116,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse Amazon Prime subscription", () => {
-      const input = `"01/19/2026","-16.35","*","","AMAZON PRIME*KV49G4I23 Amzn.com/billWA"`;
+      const input = `"01/19/2026","AMAZON PRIME*KV49G4I23 Amzn.com/billWA","-16.35","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -126,7 +126,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse refund transaction", () => {
-      const input = `"12/19/2025","21.82","*","","CLAUDE.AI SUBSCRIPTION SAN FRANCISCOCA"`;
+      const input = `"12/19/2025","CLAUDE.AI SUBSCRIPTION SAN FRANCISCOCA","21.82","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -136,7 +136,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse eBay purchase", () => {
-      const input = `"12/25/2025","-25.09","*","","EBAY O*25-13995-49443 EBAY.COM/EBP CA"`;
+      const input = `"12/25/2025","EBAY O*25-13995-49443 EBAY.COM/EBP CA","-25.09","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -149,9 +149,9 @@ describe("CreditParser", () => {
     });
 
     it("should parse multiple transactions correctly", () => {
-      const input = `"02/07/2026","-30.95","*","","SP SMOKO INC. SMOKONOW.COM CA"
-"02/04/2026","1041.29","*","","AUTOMATIC PAYMENT - THANK YOU"
-"02/02/2026","-77.97","*","","AMAZON MKTPL*3K1TO1RM3 Amzn.com/billWA"`;
+      const input = `"02/07/2026","SP SMOKO INC. SMOKONOW.COM CA","-30.95","","Posted"
+"02/04/2026","AUTOMATIC PAYMENT - THANK YOU","1041.29","","Posted"
+"02/02/2026","AMAZON MKTPL*3K1TO1RM3 Amzn.com/billWA","-77.97","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -162,7 +162,7 @@ describe("CreditParser", () => {
     });
 
     it("should parse State Farm insurance payment", () => {
-      const input = `"11/19/2025","-471.89","*","","STATE FARM INSURANCE 800-956-6310 IL"`;
+      const input = `"11/19/2025","STATE FARM INSURANCE 800-956-6310 IL","-471.89","","Posted"`;
 
       const result = parser.parse(input);
 
@@ -174,7 +174,7 @@ describe("CreditParser", () => {
 
   describe("toFinanceRows", () => {
     it("should convert parsed data to FinanceSheetRow format", () => {
-      const input = `"02/07/2026","-30.95","*","","SP SMOKO INC. SMOKONOW.COM CA"`;
+      const input = `"02/07/2026","SP SMOKO INC. SMOKONOW.COM CA","-30.95","","Posted"`;
 
       const result = parser.toFinanceRows(input);
 
@@ -189,26 +189,26 @@ describe("CreditParser", () => {
     });
 
     it("should handle multiple transactions", () => {
-      const input = `"02/07/2026","-30.95","*","","SP SMOKO INC. SMOKONOW.COM CA"
-"02/04/2026","1041.29","*","","AUTOMATIC PAYMENT - THANK YOU"
-"01/28/2026","-28.05","*","","DD *DOORDASH GREENCORN DOORDASH.COM CA"`;
+      const input = `"02/07/2026","SP SMOKO INC. SMOKONOW.COM CA","-30.95","","Posted"
+"02/04/2026","AUTOMATIC PAYMENT - THANK YOU","1041.29","","Posted"
+"01/28/2026","DD *DOORDASH GREENCORN DOORDASH.COM CA","-28.05","","Posted"`;
 
       const result = parser.toFinanceRows(input);
 
       expect(result).toHaveLength(3);
-      
+
       // First transaction
       const date1 = new Date(result[0].epoch);
       expect(date1.getMonth()).toBe(1); // February
       expect(date1.getDate()).toBe(7);
       expect(result[0].amount).toBe(-30.95);
-      
+
       // Second transaction
       const date2 = new Date(result[1].epoch);
       expect(date2.getMonth()).toBe(1); // February
       expect(date2.getDate()).toBe(4);
       expect(result[1].amount).toBe(1041.29);
-      
+
       // Third transaction
       const date3 = new Date(result[2].epoch);
       expect(date3.getMonth()).toBe(0); // January

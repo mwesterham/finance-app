@@ -40,8 +40,8 @@ export default class CheckingParser implements IParser<string, CheckingInputRow[
         data.forEach(row => {
           rows.push({
             date: cleanDate(row[0]),
-            amount: cleanNumber(row[1]),
-            detail: row[4],
+            amount: cleanNumber(row[2]),
+            detail: row[1],
           });
         });
       },

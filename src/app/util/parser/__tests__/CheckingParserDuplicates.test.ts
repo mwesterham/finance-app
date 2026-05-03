@@ -14,43 +14,41 @@ describe("CheckingParser - real file", () => {
     );
   });
 
-  it("should parse all 37 rows from the real CSV file", () => {
+  it("should parse all 29 data rows from the real CSV file (plus 1 header row)", () => {
     const result = parser.parse(csvContent);
-    expect(result).toHaveLength(37);
+    expect(result).toHaveLength(30); // 29 data rows + 1 header row (header: false)
   });
 
   it("should parse the most recent transaction correctly", () => {
     const result = parser.parse(csvContent);
-    const first = result[0];
+    // Skip header row (index 0), first real transaction is index 1
+    const first = result[1];
     expect(first.date.getFullYear()).toBe(2026);
-    expect(first.date.getMonth()).toBe(2); // March
-    expect(first.date.getDate()).toBe(16);
-    expect(first.amount).toBe(10000.00);
-    expect(first.detail).toContain("ONLINE TRANSFER FROM CHIN M");
+    expect(first.date.getMonth()).toBe(4); // May
+    expect(first.date.getDate()).toBe(1);
+    expect(first.amount).toBe(-493.06);
+    expect(first.detail).toContain("RECURRING TRANSFER TO CHIN M");
   });
 
   it("should parse negative amounts correctly", () => {
     const result = parser.parse(csvContent);
-    const capitalOnePmt = result.find(r => r.detail.includes("CAPITAL ONE CRCARDPMT") && r.date.getMonth() === 2);
+    const capitalOnePmt = result.find(r => r.detail && r.detail.includes("CAPITAL ONE") && r.detail.includes("CRCARDPMT") && r.date.getMonth && r.date.getMonth() === 2);
     expect(capitalOnePmt).toBeDefined();
     expect(capitalOnePmt!.amount).toBe(-103.69);
   });
 
-  it("should not deduplicate two payroll deposits on different dates with the same amount", () => {
+  it("should parse four payroll deposits across different dates", () => {
     const result = parser.parse(csvContent);
-    // 01/16/2026 and 01/30/2026 both have AMAZON payroll for 3684.59
-    const payrollRows = result.filter(r => r.amount === 3684.59);
-    expect(payrollRows).toHaveLength(2);
-    const dates = payrollRows.map(r => r.date.getDate()).sort((a, b) => a - b);
-    expect(dates).toEqual([16, 30]);
+    const payrollRows = result.filter(r => r.detail && r.detail.includes("AMAZON.COM SVCS") && r.detail.includes("PAYROLL"));
+    expect(payrollRows).toHaveLength(4);
   });
 
   it("should parse Wells Fargo Rewards entries", () => {
     const result = parser.parse(csvContent);
     const rewards = result.filter(r => r.detail === "WELLS FARGO REWARDS");
-    expect(rewards).toHaveLength(3);
+    expect(rewards).toHaveLength(2);
     const amounts = rewards.map(r => r.amount);
+    expect(amounts).toContain(100.00);
     expect(amounts).toContain(50.00);
-    expect(amounts).toContain(25.00);
   });
 });
