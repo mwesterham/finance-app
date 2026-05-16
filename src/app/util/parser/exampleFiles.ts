@@ -35,3 +35,9 @@ export const RULES_EXPORT_EXAMPLE =
 // Snapshot parsers share the same column layout regardless of account type.
 export const MATTHEW_SNAPSHOT_EXAMPLE =
   `ID,Name,Date,Amount,Balance,Category,User Detail,Notes,Transaction Notes`;
+
+export const CHASE_CHECKING_EXAMPLE =
+  `Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #`;
+
+export const CHASE_CREDIT_EXAMPLE =
+  `Transaction Date,Post Date,Description,Category,Type,Amount,Memo`;

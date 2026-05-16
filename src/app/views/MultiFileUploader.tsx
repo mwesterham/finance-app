@@ -12,6 +12,8 @@ import RulesExportsParser from "../util/parser/RulesExportsParser";
 import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 import CapitalOneCreditParser from "../util/parser/CapitalOneCreditParser";
 import AmexCreditParser from "../util/parser/AmexCreditParserParser";
+import ChaseCheckingParser from "../util/parser/ChaseCheckingParser";
+import ChaseCreditParser from "../util/parser/ChaseCreditParser";
 import {
   WELLS_FARGO_CHECKING_EXAMPLE,
   WELLS_FARGO_CREDIT_EXAMPLE,
@@ -22,6 +24,8 @@ import {
   EXPORT_EXAMPLE,
   RULES_EXPORT_EXAMPLE,
   MATTHEW_SNAPSHOT_EXAMPLE,
+  CHASE_CHECKING_EXAMPLE,
+  CHASE_CREDIT_EXAMPLE,
 } from "../util/parser/exampleFiles";
 import { FileValidator } from "../util/parser/FileValidator";
 import HeaderMismatchModal from "../components/HeaderMismatchModal";
@@ -44,6 +48,9 @@ export enum InputFileLabel {
   DISCOVER = "Discover",
   EXPORT = "Transactions Exported",
   RULES_EXPORT = "Rules Exported",
+  CHASE_CHECKING = "Chase Joint Checking (3727)",
+  CHASE_FREEDOM_CREDIT = "Chase Freedom Credit (1915)",
+  CHASE_AMAZON_CREDIT = "Chase Amazon Prime Credit (1616)",
 }
 
 interface MultiFileUploaderProps { }
@@ -60,11 +67,14 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map((file) => ({
-        file,
-        label: getRecommendedFileType(file.name),
-        identifier: "",
-      }));
+      const newFiles = Array.from(event.target.files).map((file) => {
+        const label = getRecommendedFileType(file.name);
+        return {
+          file,
+          label,
+          identifier: getAutoSourceId(file.name, label),
+        };
+      });
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     }
   };
@@ -79,9 +89,15 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
 
   const handleLabelChange = (index: number, newLabel: InputFileLabel) => {
     setFiles((prevFiles) =>
-      prevFiles.map((file, i) =>
-        i === index ? { ...file, label: newLabel } : file
-      )
+      prevFiles.map((file, i) => {
+        if (i !== index) return file;
+        const autoId = getAutoSourceId(file.file.name, newLabel);
+        return {
+          ...file,
+          label: newLabel,
+          identifier: autoId !== "" ? autoId : file.identifier,
+        };
+      })
     );
   };
 
@@ -108,6 +124,9 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           [InputFileLabel.DISCOVER]: DISCOVER_EXAMPLE,
           [InputFileLabel.EXPORT]: EXPORT_EXAMPLE,
           [InputFileLabel.RULES_EXPORT]: RULES_EXPORT_EXAMPLE,
+          [InputFileLabel.CHASE_CHECKING]: CHASE_CHECKING_EXAMPLE,
+          [InputFileLabel.CHASE_FREEDOM_CREDIT]: CHASE_CREDIT_EXAMPLE,
+          [InputFileLabel.CHASE_AMAZON_CREDIT]: CHASE_CREDIT_EXAMPLE,
         };
 
         // Per-label header line index (0 = first non-empty line, default).
@@ -176,6 +195,15 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           case InputFileLabel.EXPORT:
             rows = new ExportParser(EXPORT_EXAMPLE, text).toFinanceRows(text);
             break;
+          case InputFileLabel.CHASE_CHECKING:
+            rows = new ChaseCheckingParser(CHASE_CHECKING_EXAMPLE, text).toFinanceRows(text);
+            break;
+          case InputFileLabel.CHASE_FREEDOM_CREDIT:
+            rows = new ChaseCreditParser(CHASE_CREDIT_EXAMPLE, text, InputFileLabel.CHASE_FREEDOM_CREDIT).toFinanceRows(text);
+            break;
+          case InputFileLabel.CHASE_AMAZON_CREDIT:
+            rows = new ChaseCreditParser(CHASE_CREDIT_EXAMPLE, text, InputFileLabel.CHASE_AMAZON_CREDIT).toFinanceRows(text);
+            break;
           case InputFileLabel.RULES_EXPORT:
             const rules = new RulesExportsParser(RULES_EXPORT_EXAMPLE, text).parse(text);
             await DatabaseService.writeRuleToDatabase({ rules });
@@ -222,7 +250,22 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     if (lower.includes("activity.csv")) return InputFileLabel.AMEX_CREDIT;
     if (lower.includes("finance_app-transactions") || lower.includes("finance_app-filtered-transactions")) return InputFileLabel.EXPORT;
     if (lower.includes("finance_app-rules")) return InputFileLabel.RULES_EXPORT;
+    if (lower.includes("chase3727")) return InputFileLabel.CHASE_CHECKING;
+    if (lower.includes("chase1915")) return InputFileLabel.CHASE_FREEDOM_CREDIT;
+    if (lower.includes("chase1616")) return InputFileLabel.CHASE_AMAZON_CREDIT;
     return InputFileLabel.WELLS_FARGO_CHECKING;
+  };
+
+  /**
+   * Returns a hard-coded sourceId for Chase accounts based on the filename,
+   * so the user doesn't have to type it manually.
+   */
+  const getAutoSourceId = (fileName: string, label: InputFileLabel): string => {
+    const lower = fileName.toLowerCase();
+    if (label === InputFileLabel.CHASE_CHECKING || lower.includes("chase3727")) return "Chase Joint Checking";
+    if (label === InputFileLabel.CHASE_FREEDOM_CREDIT || lower.includes("chase1915")) return "Chase Freedom Credit";
+    if (label === InputFileLabel.CHASE_AMAZON_CREDIT || lower.includes("chase1616")) return "Amazon Prime Credit";
+    return "";
   };
 
   return (
