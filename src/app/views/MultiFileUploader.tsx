@@ -12,6 +12,19 @@ import RulesExportsParser from "../util/parser/RulesExportsParser";
 import { FinanceSheetRow } from "../../db/WesterhamDatabase";
 import CapitalOneCreditParser from "../util/parser/CapitalOneCreditParser";
 import AmexCreditParser from "../util/parser/AmexCreditParserParser";
+import {
+  WELLS_FARGO_CHECKING_EXAMPLE,
+  WELLS_FARGO_CREDIT_EXAMPLE,
+  CAPITAL_ONE_CREDIT_EXAMPLE,
+  AMEX_CREDIT_EXAMPLE,
+  VENMO_EXAMPLE,
+  DISCOVER_EXAMPLE,
+  EXPORT_EXAMPLE,
+  RULES_EXPORT_EXAMPLE,
+  MATTHEW_SNAPSHOT_EXAMPLE,
+} from "../util/parser/exampleFiles";
+import { FileValidator } from "../util/parser/FileValidator";
+import HeaderMismatchModal from "../components/HeaderMismatchModal";
 
 export interface LabeledFile {
   file: File;
@@ -36,21 +49,14 @@ export enum InputFileLabel {
 interface MultiFileUploaderProps { }
 
 export default function MultiFileUploader(props: MultiFileUploaderProps) {
-  const checkingParser = new CheckingParser();
-  const creditParser = new CreditParser();
-  const venmoParser = new VenmoParser();
-  const capitalOneCreditParser = new CapitalOneCreditParser();
-  const amexCreditParser = new AmexCreditParser();
-  const matthewCheckingSnapshotParser = new MatthewCheckingSnapshotParser();
-  const matthewCreditSnapshotParser = new MatthewCreditSnapshotParser();
-  const matthewVenmoSnapshotParser = new MatthewVenmoSnapshotParser();
-  const discoverParser = new DiscoverParser();
-  const exportParser = new ExportParser();
-  const rulesExportParser = new RulesExportsParser();
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [headerMismatch, setHeaderMismatch] = useState<{
+    fileName: string;
+    expectedHeaders: string[];
+    actualHeaders: string[];
+  } | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -88,50 +94,80 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     try {
       for (const { file, label, identifier } of files) {
         const text = await file.text();
+
+        // Determine the expected header for this label.
+        const expectedFileMap: Partial<Record<InputFileLabel, string>> = {
+          [InputFileLabel.WELLS_FARGO_CHECKING]: WELLS_FARGO_CHECKING_EXAMPLE,
+          [InputFileLabel.WELLS_FARGO_CREDIT]: WELLS_FARGO_CREDIT_EXAMPLE,
+          [InputFileLabel.VENMO]: VENMO_EXAMPLE,
+          [InputFileLabel.CAPITAL_ONE_CREDIT]: CAPITAL_ONE_CREDIT_EXAMPLE,
+          [InputFileLabel.AMEX_CREDIT]: AMEX_CREDIT_EXAMPLE,
+          [InputFileLabel.MATTHEW_SNAPSHOT_VENMO]: MATTHEW_SNAPSHOT_EXAMPLE,
+          [InputFileLabel.MATTHEW_SNAPSHOT_CREDIT]: MATTHEW_SNAPSHOT_EXAMPLE,
+          [InputFileLabel.MATTHEW_SNAPSHOT_CHECKING]: MATTHEW_SNAPSHOT_EXAMPLE,
+          [InputFileLabel.DISCOVER]: DISCOVER_EXAMPLE,
+          [InputFileLabel.EXPORT]: EXPORT_EXAMPLE,
+          [InputFileLabel.RULES_EXPORT]: RULES_EXPORT_EXAMPLE,
+        };
+
+        const expectedFile = expectedFileMap[label];
+        if (expectedFile) {
+          const validation = new FileValidator(expectedFile, text).validateFile();
+          if (!validation.valid) {
+            setHeaderMismatch({
+              fileName: file.name,
+              expectedHeaders: validation.expectedHeaders,
+              actualHeaders: validation.actualHeaders,
+            });
+            setIsSubmitting(false);
+            return; // Stop processing all files on first mismatch
+          }
+        }
+
         let rows: FinanceSheetRow[] | undefined;
 
         switch (label) {
           case InputFileLabel.WELLS_FARGO_CHECKING:
-            rows = checkingParser.toFinanceRows(text);
+            rows = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.WELLS_FARGO_CREDIT:
-            rows = creditParser.toFinanceRows(text);
+            rows = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.VENMO:
-            rows = venmoParser.toFinanceRows(text);
+            rows = new VenmoParser(VENMO_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.CAPITAL_ONE_CREDIT:
-            rows = capitalOneCreditParser.toFinanceRows(text);
+            rows = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.AMEX_CREDIT:
-            rows = amexCreditParser.toFinanceRows(text);
+            rows = new AmexCreditParser(AMEX_CREDIT_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
-            rows = matthewVenmoSnapshotParser.toFinanceRows({
+            rows = new MatthewVenmoSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
               text,
               label: InputFileLabel.VENMO,
             });
             break;
           case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT:
-            rows = matthewCreditSnapshotParser.toFinanceRows({
+            rows = new MatthewCreditSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
               text,
               label: InputFileLabel.WELLS_FARGO_CREDIT,
             });
             break;
           case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING:
-            rows = matthewCheckingSnapshotParser.toFinanceRows({
+            rows = new MatthewCheckingSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
               text,
               label: InputFileLabel.WELLS_FARGO_CHECKING,
             });
             break;
           case InputFileLabel.DISCOVER:
-            rows = discoverParser.toFinanceRows(text);
+            rows = new DiscoverParser(DISCOVER_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.EXPORT:
-            rows = exportParser.toFinanceRows(text);
+            rows = new ExportParser(EXPORT_EXAMPLE, text).toFinanceRows(text);
             break;
           case InputFileLabel.RULES_EXPORT:
-            const rules = rulesExportParser.parse(text);
+            const rules = new RulesExportsParser(RULES_EXPORT_EXAMPLE, text).parse(text);
             await DatabaseService.writeRuleToDatabase({ rules });
             continue;
           default:
@@ -181,6 +217,15 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
 
   return (
     <>
+      {headerMismatch && (
+        <HeaderMismatchModal
+          fileName={headerMismatch.fileName}
+          expectedHeaders={headerMismatch.expectedHeaders}
+          actualHeaders={headerMismatch.actualHeaders}
+          onClose={() => setHeaderMismatch(null)}
+        />
+      )}
+
       {isSubmitting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="flex flex-col items-center">

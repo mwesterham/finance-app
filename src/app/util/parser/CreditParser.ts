@@ -3,6 +3,7 @@ import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../views/MultiFileUploader";
+import { FileValidator } from "./FileValidator";
 
 export interface CreditInputRow {
   date: Date;
@@ -11,6 +12,12 @@ export interface CreditInputRow {
 }
 
 export default class CreditParser implements IParser<string, CreditInputRow[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   toFinanceRows(input: string): FinanceSheetRow[] {
     const creditInputs = this.parse(input);
     const financeRows: FinanceSheetRow[] = creditInputs.map(creditInput => {
@@ -26,6 +33,10 @@ export default class CreditParser implements IParser<string, CreditInputRow[]> {
   }
 
   parse(input: string): CreditInputRow[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: CreditInputRow[] = [];
 
     Papa.parse(input, {

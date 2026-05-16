@@ -3,6 +3,7 @@ import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../views/MultiFileUploader";
+import { FileValidator } from "./FileValidator";
 
 export interface MatthewCheckingSnapshotRow {
   date: Date;
@@ -18,6 +19,12 @@ export interface MatthewCheckingSnapshotParserInput {
 }
 
 export default class MatthewCheckingSnapshotParser implements IParser<MatthewCheckingSnapshotParserInput, MatthewCheckingSnapshotRow[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   toFinanceRows(input: MatthewCheckingSnapshotParserInput): FinanceSheetRow[] {
     const rows = this.parse(input);
     const financeRows: FinanceSheetRow[] = rows.map(row => {
@@ -35,6 +42,10 @@ export default class MatthewCheckingSnapshotParser implements IParser<MatthewChe
   }
 
   parse(input: MatthewCheckingSnapshotParserInput): MatthewCheckingSnapshotRow[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: MatthewCheckingSnapshotRow[] = [];
 
     Papa.parse(input.text, {

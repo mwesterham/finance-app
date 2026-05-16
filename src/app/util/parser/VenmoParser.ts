@@ -3,6 +3,7 @@ import { IParser } from "./IParser";
 import { cleanDate, formatVenmoNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../views/MultiFileUploader";
+import { FileValidator } from "./FileValidator";
 
 export interface VenmoInputRow {
   date: Date;
@@ -11,6 +12,12 @@ export interface VenmoInputRow {
 }
 
 export default class VenmoParser implements IParser<string, VenmoInputRow[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   toFinanceRows(input: string): FinanceSheetRow[] {
     const venmoInputs = this.parse(input);
     const financeRows: FinanceSheetRow[] = venmoInputs.map(venmoInput => {
@@ -26,6 +33,10 @@ export default class VenmoParser implements IParser<string, VenmoInputRow[]> {
   }
 
   parse(input: string): VenmoInputRow[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: VenmoInputRow[] = [];
 
     Papa.parse(input, {

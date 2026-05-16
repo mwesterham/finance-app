@@ -1,9 +1,20 @@
 import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { Rule } from "../../../db/WesterhamDatabase";
+import { FileValidator } from "./FileValidator";
 
 export default class RulesExportsParser implements IParser<string, Rule[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   parse(input: string): Rule[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: Rule[] = [];
 
     Papa.parse(input, {

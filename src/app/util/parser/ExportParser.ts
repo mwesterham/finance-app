@@ -1,8 +1,8 @@
 import Papa from "papaparse";
 import { IParser } from "./IParser";
-import { cleanDate, cleanNumber } from "../util";
+import { cleanDate } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../views/MultiFileUploader";
+import { FileValidator } from "./FileValidator";
 
 export interface ExportInputRow {
   date: Date;
@@ -14,6 +14,12 @@ export interface ExportInputRow {
 }
 
 export default class ExportParser implements IParser<string, ExportInputRow[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   toFinanceRows(input: string): FinanceSheetRow[] {
     const exportInputs = this.parse(input);
     const financeRows: FinanceSheetRow[] = exportInputs.map(exportInput => {
@@ -31,6 +37,10 @@ export default class ExportParser implements IParser<string, ExportInputRow[]> {
   }
 
   parse(input: string): ExportInputRow[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: ExportInputRow[] = [];
 
     Papa.parse(input, {

@@ -3,6 +3,7 @@ import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
 import { InputFileLabel } from "../../views/MultiFileUploader";
+import { FileValidator } from "./FileValidator";
 
 export interface DiscoverInputRow {
   date: Date;
@@ -11,6 +12,12 @@ export interface DiscoverInputRow {
 }
 
 export default class DiscoverParser implements IParser<string, DiscoverInputRow[]> {
+  private validator: FileValidator;
+
+  constructor(expectedFile: string, actualFile: string) {
+    this.validator = new FileValidator(expectedFile, actualFile);
+  }
+
   toFinanceRows(input: string): FinanceSheetRow[] {
     const discoverInputs = this.parse(input);
     const financeRows: FinanceSheetRow[] = discoverInputs.map(discoverInput => {
@@ -26,6 +33,10 @@ export default class DiscoverParser implements IParser<string, DiscoverInputRow[
   }
 
   parse(input: string): DiscoverInputRow[] {
+    if (!this.validator.validateFile().valid) {
+      return [];
+    }
+
     const rows: DiscoverInputRow[] = [];
 
     Papa.parse(input, {
