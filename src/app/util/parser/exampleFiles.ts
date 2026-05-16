@@ -15,14 +15,13 @@ export const WELLS_FARGO_CREDIT_EXAMPLE =
 export const CAPITAL_ONE_CREDIT_EXAMPLE =
   `Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit`;
 
-// Amex exports have no header row — the first row is already data.
-// We use the first data row's column count (3 columns) as the "expected" shape.
-// Provide a representative first row so the validator can compare column count.
+// Amex exports have no named header row in older formats, but current exports
+// include a header row with these three columns.
 export const AMEX_CREDIT_EXAMPLE =
-  `01/01/2024,Sample Merchant,12.34`;
+  `Date,Description,Amount`;
 
 export const VENMO_EXAMPLE =
-  `ID,Datetime,Type,Status,Note,From,To,Amount (total),Amount (tip),Amount (tax),Amount (fee),Funding Source,Destination,Beginning Balance,Ending Balance,Statement Period Venmo Fees,Terminal Location,Year to Date Venmo Fees,Disclaimer`;
+  `,ID,Datetime,Type,Status,Note,From,To,Amount (total),Amount (tip),Amount (tax),Amount (fee),Tax Rate,Tax Exempt,Funding Source,Destination,Beginning Balance,Ending Balance,Statement Period Venmo Fees,Terminal Location,Year to Date Venmo Fees,Disclaimer`;
 
 export const DISCOVER_EXAMPLE =
   `Trans. Date,Post Date,Description,Amount,Category`;

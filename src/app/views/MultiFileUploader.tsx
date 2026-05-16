@@ -110,9 +110,19 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
           [InputFileLabel.RULES_EXPORT]: RULES_EXPORT_EXAMPLE,
         };
 
+        // Per-label header line index (0 = first non-empty line, default).
+        const headerLineIndexMap: Partial<Record<InputFileLabel, number>> = {
+          [InputFileLabel.VENMO]: 2,
+        };
+
         const expectedFile = expectedFileMap[label];
         if (expectedFile) {
-          const validation = new FileValidator(expectedFile, text).validateFile();
+          const headerLineIndex = headerLineIndexMap[label];
+          const validation = new FileValidator(
+            expectedFile,
+            text,
+            headerLineIndex !== undefined ? { headerLineIndex } : {}
+          ).validateFile();
           if (!validation.valid) {
             setHeaderMismatch({
               fileName: file.name,

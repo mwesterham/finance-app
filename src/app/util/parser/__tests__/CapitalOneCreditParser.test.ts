@@ -1,11 +1,12 @@
 import CapitalOneCreditParser from "../CapitalOneCreditParser";
 import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { CAPITAL_ONE_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CapitalOneCreditParser", () => {
   let parser: CapitalOneCreditParser;
 
   beforeEach(() => {
-    parser = new CapitalOneCreditParser();
+    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, CAPITAL_ONE_CREDIT_EXAMPLE);
   });
 
   describe("parse", () => {

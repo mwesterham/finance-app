@@ -1,11 +1,12 @@
 import CheckingParser from "../CheckingParser";
 import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { WELLS_FARGO_CHECKING_EXAMPLE } from "../exampleFiles";
 
 describe("CheckingParser", () => {
   let parser: CheckingParser;
 
   beforeEach(() => {
-    parser = new CheckingParser();
+    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, WELLS_FARGO_CHECKING_EXAMPLE);
   });
 
   describe("parse", () => {

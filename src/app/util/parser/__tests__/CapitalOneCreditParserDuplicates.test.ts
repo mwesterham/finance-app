@@ -1,17 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 import CapitalOneCreditParser from "../CapitalOneCreditParser";
+import { CAPITAL_ONE_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CapitalOneCreditParser - duplicate detection", () => {
   let parser: CapitalOneCreditParser;
   let csvContent: string;
 
   beforeEach(() => {
-    parser = new CapitalOneCreditParser();
     csvContent = fs.readFileSync(
       path.resolve(__dirname, "resources/2026-03-21_transaction_download.csv"),
       "utf-8"
     );
+    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, csvContent);
   });
 
   it("should parse all 28 data rows from the real CSV file", () => {

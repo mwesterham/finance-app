@@ -1,17 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 import CreditParser from "../CreditParser";
+import { WELLS_FARGO_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CreditParser - real file", () => {
   let parser: CreditParser;
   let csvContent: string;
 
   beforeEach(() => {
-    parser = new CreditParser();
     csvContent = fs.readFileSync(
       path.resolve(__dirname, "resources/CreditCard2.csv"),
       "utf-8"
     );
+    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, csvContent);
   });
 
   it("should parse all 52 data rows from the real CSV file (plus 1 header row)", () => {

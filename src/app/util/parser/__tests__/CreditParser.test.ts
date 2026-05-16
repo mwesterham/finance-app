@@ -1,11 +1,12 @@
 import CreditParser from "../CreditParser";
 import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { WELLS_FARGO_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CreditParser", () => {
   let parser: CreditParser;
 
   beforeEach(() => {
-    parser = new CreditParser();
+    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, WELLS_FARGO_CREDIT_EXAMPLE);
   });
 
   describe("parse", () => {

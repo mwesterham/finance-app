@@ -1,17 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 import CheckingParser from "../CheckingParser";
+import { WELLS_FARGO_CHECKING_EXAMPLE } from "../exampleFiles";
 
 describe("CheckingParser - real file", () => {
   let parser: CheckingParser;
   let csvContent: string;
 
   beforeEach(() => {
-    parser = new CheckingParser();
     csvContent = fs.readFileSync(
       path.resolve(__dirname, "resources/Checking1.csv"),
       "utf-8"
     );
+    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, csvContent);
   });
 
   it("should parse all 29 data rows from the real CSV file (plus 1 header row)", () => {

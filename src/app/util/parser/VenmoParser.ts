@@ -15,7 +15,7 @@ export default class VenmoParser implements IParser<string, VenmoInputRow[]> {
   private validator: FileValidator;
 
   constructor(expectedFile: string, actualFile: string) {
-    this.validator = new FileValidator(expectedFile, actualFile);
+    this.validator = new FileValidator(expectedFile, actualFile, { headerLineIndex: 2 });
   }
 
   toFinanceRows(input: string): FinanceSheetRow[] {
