@@ -113,8 +113,10 @@ export class WesterhamDatabase {
       { filenamePattern: "finance_app-filtered-transactions", parserKey: "Transactions Exported",         defaultSourceId: "" },
       { filenamePattern: "finance_app-rules",                 parserKey: "Rules Exported",                defaultSourceId: "" },
       { filenamePattern: "chase3727",                         parserKey: "Chase Checking",                defaultSourceId: "Chase Joint Checking" },
+      { filenamePattern: "chase5819",                         parserKey: "Chase Checking",                defaultSourceId: "Chase Jessica Checking" },
       { filenamePattern: "chase1915",                         parserKey: "Chase Credit",                  defaultSourceId: "Chase Freedom Credit" },
       { filenamePattern: "chase1616",                         parserKey: "Chase Credit",                  defaultSourceId: "Amazon Prime Credit" },
+      { filenamePattern: "chase8849",                         parserKey: "Chase Credit",                  defaultSourceId: "Chase Sapphire Reserve Credit" },
     ];
 
     const stmt = this.db.prepare(
