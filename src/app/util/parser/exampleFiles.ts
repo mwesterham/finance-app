@@ -30,7 +30,7 @@ export const EXPORT_EXAMPLE =
   `transactionId,epoch,amount,transactionInfo,source,category,providedDetail`;
 
 export const RULES_EXPORT_EXAMPLE =
-  `ID,Matching Expression,Category,Provided Detail`;
+  `ruleId,matchingExpression,category,providedDetail`;
 
 // Snapshot parsers share the same column layout regardless of account type.
 export const MATTHEW_SNAPSHOT_EXAMPLE =

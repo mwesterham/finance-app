@@ -147,6 +147,16 @@ export interface OnUpdateFileTypeResult extends Result {
   data: any;
 }
 
+export interface OpenDbDirectoryProps {}
+export interface OnOpenDbDirectoryResult extends Result {
+  success: boolean;
+}
+
+export interface OpenBackupsDirectoryProps {}
+export interface OnOpenBackupsDirectoryResult extends Result {
+  success: boolean;
+}
+
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
@@ -237,6 +247,16 @@ const electronAPI = {
   onUpdateFileType: (callback: (event: any, values: OnUpdateFileTypeResult) => void) =>
     ipcRenderer.on('updateFileTypeResult', callback),
   detachOnUpdateFileType: () => ipcRenderer.removeAllListeners('updateFileTypeResult'),
+
+  openDbDirectory: async (props?: OpenDbDirectoryProps) => ipcRenderer.send('openDbDirectory', props),
+  onOpenDbDirectory: (callback: (event: any, values: OnOpenDbDirectoryResult) => void) =>
+    ipcRenderer.on('openDbDirectoryResult', callback),
+  detachOnOpenDbDirectory: () => ipcRenderer.removeAllListeners('openDbDirectoryResult'),
+
+  openBackupsDirectory: async (props?: OpenBackupsDirectoryProps) => ipcRenderer.send('openBackupsDirectory', props),
+  onOpenBackupsDirectory: (callback: (event: any, values: OnOpenBackupsDirectoryResult) => void) =>
+    ipcRenderer.on('openBackupsDirectoryResult', callback),
+  detachOnOpenBackupsDirectory: () => ipcRenderer.removeAllListeners('openBackupsDirectoryResult'),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

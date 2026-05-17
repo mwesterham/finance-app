@@ -35,6 +35,10 @@ import {
   OnDeleteFileTypeResult,
   UpdateFileTypeProps,
   OnUpdateFileTypeResult,
+  OpenDbDirectoryProps,
+  OnOpenDbDirectoryResult,
+  OpenBackupsDirectoryProps,
+  OnOpenBackupsDirectoryResult,
 } from "../../preload";
 
 export default class DatabaseService {
@@ -274,6 +278,32 @@ export default class DatabaseService {
       };
       window.electronAPI.onUpdateFileType(handler);
       window.electronAPI.updateFileType(props);
+    });
+  }
+
+  static openDbDirectory(
+    props?: OpenDbDirectoryProps
+  ): Promise<OnOpenDbDirectoryResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnOpenDbDirectoryResult) => {
+        window.electronAPI.detachOnOpenDbDirectory();
+        resolve(result);
+      };
+      window.electronAPI.onOpenDbDirectory(handler);
+      window.electronAPI.openDbDirectory(props);
+    });
+  }
+
+  static openBackupsDirectory(
+    props?: OpenBackupsDirectoryProps
+  ): Promise<OnOpenBackupsDirectoryResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnOpenBackupsDirectoryResult) => {
+        window.electronAPI.detachOnOpenBackupsDirectory();
+        resolve(result);
+      };
+      window.electronAPI.onOpenBackupsDirectory(handler);
+      window.electronAPI.openBackupsDirectory(props);
     });
   }
 }

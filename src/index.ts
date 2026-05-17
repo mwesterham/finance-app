@@ -1,7 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import { updateElectronApp } from 'update-electron-app';
 import { ipcMain } from 'electron';
-import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps, ReadFileTypesProps, OnReadFileTypesResult, WriteFileTypeProps, OnWriteFileTypeResult, DeleteFileTypeProps, OnDeleteFileTypeResult, UpdateFileTypeProps, OnUpdateFileTypeResult } from './preload';
+import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps, ReadFileTypesProps, OnReadFileTypesResult, WriteFileTypeProps, OnWriteFileTypeResult, DeleteFileTypeProps, OnDeleteFileTypeResult, UpdateFileTypeProps, OnUpdateFileTypeResult, OpenDbDirectoryProps, OnOpenDbDirectoryResult, OpenBackupsDirectoryProps, OnOpenBackupsDirectoryResult } from './preload';
 import { DatabaseName, FinanceSheetRow, WesterhamDatabase } from './db/WesterhamDatabase';
 import path from 'path';
 import { FileService } from './file/FileService';
@@ -296,4 +296,18 @@ ipcMain.on('updateFileType', async (event, props: UpdateFileTypeProps) => {
     console.error("Error updating file type:", err);
     event.reply('updateFileTypeResult', { data: null, err });
   }
+});
+
+ipcMain.on('openDbDirectory', async (event, props: OpenDbDirectoryProps) => {
+  shell.openPath(dbsTargetPath);
+  const response: OnOpenDbDirectoryResult = { success: true };
+  event.reply('openDbDirectoryResult', response);
+});
+
+const backupsTargetPath = path.join(app.getPath("userData"), 'financeApp', 'backups', 'dbs');
+
+ipcMain.on('openBackupsDirectory', async (event, props: OpenBackupsDirectoryProps) => {
+  shell.openPath(backupsTargetPath);
+  const response: OnOpenBackupsDirectoryResult = { success: true };
+  event.reply('openBackupsDirectoryResult', response);
 });

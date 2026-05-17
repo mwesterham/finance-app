@@ -148,6 +148,20 @@ export const DatabaseManager = ({ onSelect }: DatabaseManagerProps) => {
             >
               Create
             </button>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => DatabaseService.openDbDirectory()}
+                className="bg-gray-600 text-white px-2 py-1 text-xs rounded hover:bg-gray-700 whitespace-nowrap"
+              >
+                Open DB Folder
+              </button>
+              <button
+                onClick={() => DatabaseService.openBackupsDirectory()}
+                className="bg-gray-600 text-white px-2 py-1 text-xs rounded hover:bg-gray-700 whitespace-nowrap"
+              >
+                Snapshots
+              </button>
+            </div>
           </div>
         </div>
       </div>
