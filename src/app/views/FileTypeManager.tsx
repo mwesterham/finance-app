@@ -11,7 +11,7 @@ import {
   getFacetedMinMaxValues,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FileType } from "../../db/WesterhamDatabase";
 import { ParserKey } from "./MultiFileUploader";
 import { GoArrowDown, GoArrowUp, GoArrowSwitch } from "react-icons/go";
@@ -88,15 +88,17 @@ const getColumns = () => [
         });
       };
       return (
-        <select
-          value={value}
-          onChange={onChange}
-          className="w-full border rounded px-2 py-1 text-sm"
-        >
-          {ALL_PARSER_KEYS.map((k) => (
-            <option key={k} value={k}>{k}</option>
-          ))}
-        </select>
+        <div className="px-2">
+          <select
+            value={value}
+            onChange={onChange}
+            className="w-full border rounded px-2 py-1 text-sm"
+          >
+            {ALL_PARSER_KEYS.map((k) => (
+              <option key={k} value={k}>{k}</option>
+            ))}
+          </select>
+        </div>
       );
     },
     header: ({ column }) => <span>Parser</span>,
@@ -198,7 +200,7 @@ const FileTypeForm: React.FC<FileTypeFormProps> = ({ onSubmit, onCancel }) => {
         />
       </div>
       <div className="flex gap-2">
-        <button type="submit" className="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+        <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
           Add
         </button>
         <button type="button" onClick={onCancel} className="flex-1 border py-2 rounded hover:bg-gray-100">
@@ -213,7 +215,7 @@ const FileTypeForm: React.FC<FileTypeFormProps> = ({ onSubmit, onCancel }) => {
 
 export interface FileTypeManagerProps {}
 
-export const FileTypeManager = (props: FileTypeManagerProps) => {
+export const FileTypeManager = (_props: FileTypeManagerProps) => {
   const [fileTypeData, setFileTypeData] = useState<FileType[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [deletedRows, setDeletedRows] = useState<number[]>([]);
@@ -241,28 +243,14 @@ export const FileTypeManager = (props: FileTypeManagerProps) => {
   const [columnSizing, setColumnSizing] = useState<{ [key: string]: number }>({});
   const [sorting, setSorting] = useState([{ id: "filenamePattern", desc: false }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
 
   const columns = getColumns();
 
-  const [data, setData] = useState<FileType[]>([]);
-  useEffect(() => { setData(fileTypeData); }, [fileTypeData]);
-
-  const updateData = useCallback(
-    (rowIndex: number, columnId: string, value: unknown) => {
-      setData((old) =>
-        old.map((row, index) =>
-          index === rowIndex ? { ...row, [columnId]: value } : row
-        )
-      );
-    },
-    []
-  );
-
   const table = useReactTable({
-    data,
+    data: fileTypeData,
     columns,
     state: { columnVisibility, columnSizing, sorting, columnFilters },
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -274,164 +262,194 @@ export const FileTypeManager = (props: FileTypeManagerProps) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     initialState: { pagination: { pageSize: 20 } },
-    meta: { updateData },
+    meta: {
+      updateData: (rowIndex: number, columnId: string, value: unknown) => {
+        skipAutoResetPageIndex();
+        setFileTypeData((old) =>
+          old.map((row, index) =>
+            index === rowIndex ? { ...row, [columnId]: value } : row
+          )
+        );
+      },
+    },
   });
 
   return (
-    <ErrorBoundary>
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">File Types</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
-          >
-            + New File Type
-          </button>
-        </div>
+    <div className="p-4 bg-white shadow-md rounded-lg">
+      <div className="flex justify-end mb-4">
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => setShowModal(true)}
+        >
+          + New File Type
+        </button>
+      </div>
 
-        <p className="text-sm text-gray-600">
-          Each row maps a filename pattern to a parser and an optional default source ID.
-          When you upload a file, the first matching pattern (top to bottom) determines the parser used.
-        </p>
-
-        {/* New File Type Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-              <div className="flex items-center justify-between px-4 pt-4">
-                <h3 className="font-semibold text-base">New File Type</h3>
-                <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
-              </div>
-              <FileTypeForm
-                onSubmit={async (ft) => {
-                  await DatabaseService.writeFileType({ fileType: ft });
-                  setShowModal(false);
-                  fetchFileTypes();
-                }}
-                onCancel={() => setShowModal(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    if (header.column.id === "fileTypeId") return null;
-                    return (
-                      <th
-                        key={header.id}
-                        className="border px-2 py-1 bg-gray-100 text-left select-none"
-                      >
-                        <div
-                          className={cx("flex items-center gap-1", header.column.getCanSort() ? "cursor-pointer" : "")}
+      <table className="min-w-full border-collapse border border-gray-300">
+        <thead className="bg-gray-100">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="border-b border-gray-300">
+              <th key={`${headerGroup.id}-custom-1`} className="px-4 py-2 text-left">
+                Manage
+              </th>
+              {headerGroup.headers.map((header) => {
+                if (header.column.id === "fileTypeId") return null;
+                return (
+                  <th key={header.id} colSpan={header.colSpan} className="px-4 py-2 text-left">
+                    {header.isPlaceholder ? null : (
+                      <div className="flex items-center">
+                        <span
+                          className={cx(`${header.column.getCanSort() ? "cursor-pointer" : ""}`, "pr-2")}
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === "asc" ? (
-                            <GoArrowUp />
-                          ) : header.column.getIsSorted() === "desc" ? (
-                            <GoArrowDown />
-                          ) : header.column.getCanSort() ? (
-                            <GoArrowSwitch />
-                          ) : null}
-                        </div>
-                        {header.column.getCanFilter() && (
-                          <Filter column={header.column} />
-                        )}
-                      </th>
-                    );
-                  })}
-                  <th className="border px-2 py-1 bg-gray-100 w-10" />
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => {
-                const fileTypeId = Number(row.original.fileTypeId);
-                const isDeleting = deletedRows.includes(fileTypeId);
-                return (
-                  <tr
-                    key={row.id}
-                    className={cx(
-                      "border-b transition-opacity duration-700",
-                      isDeleting ? "opacity-0" : "opacity-100"
+                          {header.column.getIsSorted() === "asc" ? <GoArrowUp /> : header.column.getIsSorted() === "desc" ? <GoArrowDown /> : <GoArrowSwitch />}
+                        </span>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </div>
                     )}
-                  >
-                    {row.getVisibleCells().map((cell) => {
-                      if (cell.column.id === "fileTypeId") return null;
-                      return (
-                        <td key={cell.id} className="border px-2 py-1">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      );
-                    })}
-                    <td className="border px-2 py-1 text-center">
-                      <ConfirmAction
-                        title="Delete File Type?"
-                        body={
-                          <table className="w-full border-collapse border border-gray-300 text-left text-sm">
-                            <tbody>
-                              {[
-                                { label: "Pattern", value: row.original.filenamePattern },
-                                { label: "Parser", value: row.original.parserKey },
-                                { label: "Default Source ID", value: row.original.defaultSourceId || "—" },
-                              ].map(({ label, value }) => (
-                                <tr key={label} className="border-b border-gray-200">
-                                  <td className="px-4 py-2 font-medium">{label}</td>
-                                  <td className="px-4 py-2">{value}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        }
-                        onConfirm={() => deleteFileType(fileTypeId)}
-                      >
-                        <WithTooltip text="Delete file type">
-                          <MdDeleteForever className="text-red-500 hover:text-red-700 cursor-pointer text-xl" />
-                        </WithTooltip>
-                      </ConfirmAction>
-                    </td>
-                  </tr>
+                    {header.column.getCanFilter() && (
+                      <div className="mt-1">
+                        <Filter column={header.column} />
+                      </div>
+                    )}
+                  </th>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => {
+            const fileTypeId = Number(row.original.fileTypeId);
+            const isDeleting = deletedRows.includes(fileTypeId);
+            return (
+              <ErrorBoundary key={`boundary-${row.id}`}>
+                <tr
+                  key={row.id}
+                  className={cx(
+                    "border-b",
+                    isDeleting ? "delete-animation" : ""
+                  )}
+                >
+                  <td key={`${row.id}-custom-1`} className="border-r border-gray-300">
+                    <span className="flex flex-grow items-center justify-center space-x-2">
+                      <WithTooltip text="Delete" position="top">
+                        <ConfirmAction
+                          onConfirm={() => deleteFileType(fileTypeId)}
+                          title="Delete file type?"
+                          body={
+                            <table className="w-full border-collapse border border-gray-300 text-left text-sm">
+                              <tbody>
+                                {[
+                                  { label: "Pattern", value: row.original.filenamePattern },
+                                  { label: "Parser", value: row.original.parserKey },
+                                  { label: "Default Source ID", value: row.original.defaultSourceId || "—" },
+                                ].map(({ label, value }) => (
+                                  <tr key={label} className="border-b border-gray-200">
+                                    <td className="px-4 py-2 font-medium">{label}</td>
+                                    <td className="px-4 py-2">{value}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          }
+                        >
+                          <MdDeleteForever
+                            className="text-red-500 cursor-pointer hover:text-red-700 min-w-5 min-h-5"
+                          />
+                        </ConfirmAction>
+                      </WithTooltip>
+                    </span>
+                  </td>
+                  {row.getVisibleCells().map((cell) => {
+                    if (cell.column.id === "fileTypeId") return null;
+                    return (
+                      <td key={cell.id} className="border-r border-gray-300 group hover:bg-gray-50">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </ErrorBoundary>
+            );
+          })}
+        </tbody>
+      </table>
 
-        {/* Pagination */}
-        <div className="flex items-center gap-2 text-sm">
-          <button onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="p-1 disabled:opacity-40">
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+          >
             <MdKeyboardDoubleArrowLeft />
           </button>
-          <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="p-1 disabled:opacity-40">
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
             <MdKeyboardArrowLeft />
           </button>
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-          </span>
-          <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="p-1 disabled:opacity-40">
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
             <MdKeyboardArrowRight />
           </button>
-          <button onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()} className="p-1 disabled:opacity-40">
+          <button
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
             <MdKeyboardDoubleArrowRight />
           </button>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="border rounded px-1 py-0.5"
-          >
-            {[10, 20, 50].map((size) => (
-              <option key={size} value={size}>Show {size}</option>
-            ))}
-          </select>
         </div>
+        <span className="text-sm">Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
+        <select
+          className="border rounded px-2 py-1"
+          value={table.getState().pagination.pageSize}
+          onChange={(e) => table.setPageSize(Number(e.target.value))}
+        >
+          {[10, 20, 30, 40, 50, 100, 200].map((pageSize) => (
+            <option key={pageSize} value={pageSize}>Show {pageSize}</option>
+          ))}
+        </select>
       </div>
-    </ErrorBoundary>
+      <div className="mt-2 text-sm">{table.getPrePaginationRowModel().rows.length} Rows</div>
+
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-xl w-full">
+            <h1 className="text-xl font-semibold pb-4">Create File Type</h1>
+            <FileTypeForm
+              onSubmit={async (ft) => {
+                await DatabaseService.writeFileType({ fileType: ft });
+                setShowModal(false);
+                fetchFileTypes();
+              }}
+              onCancel={() => setShowModal(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
+
+function useSkipper() {
+  const shouldSkipRef = useRef(true);
+  const shouldSkip = shouldSkipRef.current;
+
+  const skip = useCallback(() => {
+    shouldSkipRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    shouldSkipRef.current = true;
+  });
+
+  return [shouldSkip, skip] as const;
+}

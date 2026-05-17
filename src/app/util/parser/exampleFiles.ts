@@ -27,7 +27,7 @@ export const DISCOVER_EXAMPLE =
   `Trans. Date,Post Date,Description,Amount,Category`;
 
 export const EXPORT_EXAMPLE =
-  `ID,Date,Amount,Transaction Info,Source,Category,Provided Detail`;
+  `transactionId,epoch,amount,transactionInfo,source,category,providedDetail`;
 
 export const RULES_EXPORT_EXAMPLE =
   `ID,Matching Expression,Category,Provided Detail`;

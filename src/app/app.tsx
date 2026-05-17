@@ -8,6 +8,17 @@ import { RuleBasedCategorizer } from "./views/RuleBasedCategorizer";
 import { RuleManager } from "./views/RuleManager";
 import { FileTypeManager } from "./views/FileTypeManager";
 import { DatabaseManager } from "./components/DatabaseManager";
+import WithTooltip from "./components/WithTooltip";
+import { MdInfoOutline } from "react-icons/md";
+
+const tabDescriptions: Record<string, string> = {
+  pivotTable: "Explore transactions grouped by source, category, and date ranges.",
+  transactionTable: "View and edit all imported transactions in a flat table.",
+  categorizeItems: "Apply rules to auto-categorize uncategorized transactions.",
+  ruleManager: "Create, edit, and delete categorization rules.",
+  fileTypeManager: "Configure filename patterns, parsers, and default source IDs for file imports.",
+  importFiles: "Upload CSV files to import transactions into the database.",
+};
 
 const App = () => {
   const [version, setVersion] = useState(0);
@@ -33,9 +44,12 @@ const App = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`py-2 px-4 ${activeTab === tab ? "border-b-2 border-blue-500" : ""}`}
+            className={`py-2 px-4 flex items-center gap-1 ${activeTab === tab ? "border-b-2 border-blue-500" : ""}`}
           >
-            {prettyPrintString(tab)} {/* Format tab names */}
+            {prettyPrintString(tab)}
+            <WithTooltip text={tabDescriptions[tab]} position="top" tooltipClassName="w-64 whitespace-normal">
+              <MdInfoOutline className="text-gray-400 hover:text-gray-600 text-sm" />
+            </WithTooltip>
           </button>
         ))}
       </div>
