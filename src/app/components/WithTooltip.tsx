@@ -5,9 +5,10 @@ interface WithTooltipProps {
   children: ReactNode;
   position?: "top" | "right" | "bottom" | "left";
   tooltipClassName?: string;
+  delay?: boolean;
 }
 
-export default function WithTooltip({ text, children, position = "top", tooltipClassName = "" }: WithTooltipProps) {
+export default function WithTooltip({ text, children, position = "top", tooltipClassName = "", delay = false }: WithTooltipProps) {
   const positionClasses = {
     top: "bottom-full left-1/2 transform -translate-x-1/2",
     right: "left-full top-1/2 transform -translate-y-1/2",
@@ -22,7 +23,7 @@ export default function WithTooltip({ text, children, position = "top", tooltipC
 
       {/* Tooltip */}
       <div
-        className={`absolute ${positionClasses[position]} bg-gray-800 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${tooltipClassName}`}
+        className={`absolute ${positionClasses[position]} bg-gray-800 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${delay ? "delay-[250ms]" : ""} ${tooltipClassName}`}
       >
         {text}
       </div>

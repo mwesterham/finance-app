@@ -47,7 +47,7 @@ const App = () => {
             className={`py-2 px-4 flex items-center gap-1 ${activeTab === tab ? "border-b-2 border-blue-500" : ""}`}
           >
             {prettyPrintString(tab)}
-            <WithTooltip text={tabDescriptions[tab]} position="top" tooltipClassName="w-64 whitespace-normal">
+            <WithTooltip text={tabDescriptions[tab]} position="top" tooltipClassName="w-64 whitespace-normal" delay>
               <MdInfoOutline className="text-gray-400 hover:text-gray-600 text-sm" />
             </WithTooltip>
           </button>

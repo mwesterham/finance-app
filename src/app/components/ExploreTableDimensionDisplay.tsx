@@ -90,7 +90,7 @@ const ExploreTableDimensionDisplay = (props: ExploreTableDimensionDisplayProps) 
       </div>
 
       {filterDropdownCol === colId && (
-        <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border max-h-96 overflow-auto">
+        <div ref={dropdownRef} className="absolute z-50 top-full mt-2 left-0 bg-white text-black shadow-lg p-2 rounded border max-h-96 min-w-48 max-w-72 overflow-x-auto overflow-y-auto">
           <span className="flex flex-col">
             <div className="flex justify-between gap-2 mb-2 text-sm">
               <button onClick={selectAll} className="text-blue-600 hover:underline">Select All</button>
@@ -110,7 +110,7 @@ const ExploreTableDimensionDisplay = (props: ExploreTableDimensionDisplayProps) 
                 .sort()
                 .map(([val, count]) => (
                   <label key={val} className={cx(
-                    "flex items-center gap-2", 
+                    "flex items-center gap-2 whitespace-nowrap", 
                     inputValue != null && inputValue.length != 0 && !getColumnDisplayName(val, colId).toLowerCase().includes(inputValue.toLowerCase()) ? "hidden" : ""
                     )}>
                     <input
