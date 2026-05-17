@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CheckingParser from "../util/parser/CheckingParser";
 import CreditParser from "../util/parser/CreditParser";
 import VenmoParser from "../util/parser/VenmoParser";
@@ -9,7 +9,7 @@ import DatabaseService from "../util/DatabaseService";
 import DiscoverParser from "../util/parser/DiscoverParser";
 import ExportParser from "../util/parser/ExportParser";
 import RulesExportsParser from "../util/parser/RulesExportsParser";
-import { FinanceSheetRow } from "../../db/WesterhamDatabase";
+import { FinanceSheetRow, FileType } from "../../db/WesterhamDatabase";
 import CapitalOneCreditParser from "../util/parser/CapitalOneCreditParser";
 import AmexCreditParser from "../util/parser/AmexCreditParserParser";
 import ChaseCheckingParser from "../util/parser/ChaseCheckingParser";
@@ -32,30 +32,33 @@ import HeaderMismatchModal from "../components/HeaderMismatchModal";
 
 export interface LabeledFile {
   file: File;
-  label: InputFileLabel;
+  parserKey: ParserKey;
   identifier: string;
 }
 
-export enum InputFileLabel {
-  WELLS_FARGO_CHECKING = "Wells Fargo Checking",
-  WELLS_FARGO_CREDIT = "Wells Fargo Credit",
-  CAPITAL_ONE_CREDIT = "Capital One Credit",
-  AMEX_CREDIT = "Amex Credit",
-  VENMO = "Venmo",
-  MATTHEW_SNAPSHOT_CHECKING = "Wells Fargo Checking Snapshot",
-  MATTHEW_SNAPSHOT_CREDIT = "Wells Fargo Credit Snapshot",
-  MATTHEW_SNAPSHOT_VENMO = "Venmo Snapshot",
-  DISCOVER = "Discover",
-  EXPORT = "Transactions Exported",
-  RULES_EXPORT = "Rules Exported",
-  CHASE_CHECKING = "Chase Joint Checking (3727)",
-  CHASE_FREEDOM_CREDIT = "Chase Freedom Credit (1915)",
-  CHASE_AMAZON_CREDIT = "Chase Amazon Prime Credit (1616)",
+/**
+ * Each value is the parser class name used in the switch statement.
+ * This is what gets stored in FileType.parserKey.
+ */
+export enum ParserKey {
+  CHECKING_PARSER            = "Wells Fargo Checking",
+  CREDIT_PARSER              = "Wells Fargo Credit",
+  CAPITAL_ONE_CREDIT_PARSER  = "Capital One Credit",
+  AMEX_CREDIT_PARSER         = "Amex Credit",
+  VENMO_PARSER               = "Venmo",
+  MATTHEW_SNAPSHOT_CHECKING  = "Wells Fargo Checking Snapshot",
+  MATTHEW_SNAPSHOT_CREDIT    = "Wells Fargo Credit Snapshot",
+  MATTHEW_SNAPSHOT_VENMO     = "Venmo Snapshot",
+  DISCOVER_PARSER            = "Discover",
+  EXPORT_PARSER              = "Transactions Exported",
+  RULES_EXPORT_PARSER        = "Rules Exported",
+  CHASE_CHECKING_PARSER      = "Chase Checking",
+  CHASE_CREDIT_PARSER        = "Chase Credit",
 }
 
-interface MultiFileUploaderProps { }
+interface MultiFileUploaderProps {}
 
-export default function MultiFileUploader(props: MultiFileUploaderProps) {
+export default function MultiFileUploader(_props: MultiFileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<LabeledFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,15 +67,52 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     expectedHeaders: string[];
     actualHeaders: string[];
   } | null>(null);
+  const [fileTypes, setFileTypes] = useState<FileType[]>([]);
+
+  useEffect(() => {
+    DatabaseService.readFileTypes().then((result) => {
+      setFileTypes(result.fileTypes);
+    });
+  }, []);
+
+  /**
+   * Returns the first matching ParserKey from the user-configured file types,
+   * falling back to CHECKING_PARSER if nothing matches.
+   */
+  const getRecommendedParserKey = (fileName: string): ParserKey => {
+    const lower = fileName.toLowerCase();
+    for (const ft of fileTypes) {
+      if (lower.includes(ft.filenamePattern.toLowerCase())) {
+        if (Object.values(ParserKey).includes(ft.parserKey as ParserKey)) {
+          return ft.parserKey as ParserKey;
+        }
+      }
+    }
+    return ParserKey.CHECKING_PARSER;
+  };
+
+  /**
+   * Returns the default source ID from the matching file type config.
+   */
+  const getAutoSourceId = (fileName: string, parserKey: ParserKey): string => {
+    const lower = fileName.toLowerCase();
+    for (const ft of fileTypes) {
+      if (lower.includes(ft.filenamePattern.toLowerCase()) && ft.parserKey === parserKey) {
+        return ft.defaultSourceId ?? "";
+      }
+    }
+    const byKey = fileTypes.find((ft) => ft.parserKey === parserKey);
+    return byKey?.defaultSourceId ?? "";
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files).map((file) => {
-        const label = getRecommendedFileType(file.name);
+        const parserKey = getRecommendedParserKey(file.name);
         return {
           file,
-          label,
-          identifier: getAutoSourceId(file.name, label),
+          parserKey,
+          identifier: getAutoSourceId(file.name, parserKey),
         };
       });
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
@@ -87,14 +127,14 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     );
   };
 
-  const handleLabelChange = (index: number, newLabel: InputFileLabel) => {
+  const handleParserKeyChange = (index: number, newKey: ParserKey) => {
     setFiles((prevFiles) =>
       prevFiles.map((file, i) => {
         if (i !== index) return file;
-        const autoId = getAutoSourceId(file.file.name, newLabel);
+        const autoId = getAutoSourceId(file.file.name, newKey);
         return {
           ...file,
-          label: newLabel,
+          parserKey: newKey,
           identifier: autoId !== "" ? autoId : file.identifier,
         };
       })
@@ -105,130 +145,107 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  const handleMultiFileSubmit = async (files: LabeledFile[]) => {
-    setIsSubmitting(true); // Show modal and block UI
+  const handleMultiFileSubmit = async (filesToSubmit: LabeledFile[]) => {
+    setIsSubmitting(true);
     try {
-      for (const { file, label, identifier } of files) {
+      for (const { file, parserKey, identifier } of filesToSubmit) {
         const text = await file.text();
-
-        // Determine the expected header for this label.
-        const expectedFileMap: Partial<Record<InputFileLabel, string>> = {
-          [InputFileLabel.WELLS_FARGO_CHECKING]: WELLS_FARGO_CHECKING_EXAMPLE,
-          [InputFileLabel.WELLS_FARGO_CREDIT]: WELLS_FARGO_CREDIT_EXAMPLE,
-          [InputFileLabel.VENMO]: VENMO_EXAMPLE,
-          [InputFileLabel.CAPITAL_ONE_CREDIT]: CAPITAL_ONE_CREDIT_EXAMPLE,
-          [InputFileLabel.AMEX_CREDIT]: AMEX_CREDIT_EXAMPLE,
-          [InputFileLabel.MATTHEW_SNAPSHOT_VENMO]: MATTHEW_SNAPSHOT_EXAMPLE,
-          [InputFileLabel.MATTHEW_SNAPSHOT_CREDIT]: MATTHEW_SNAPSHOT_EXAMPLE,
-          [InputFileLabel.MATTHEW_SNAPSHOT_CHECKING]: MATTHEW_SNAPSHOT_EXAMPLE,
-          [InputFileLabel.DISCOVER]: DISCOVER_EXAMPLE,
-          [InputFileLabel.EXPORT]: EXPORT_EXAMPLE,
-          [InputFileLabel.RULES_EXPORT]: RULES_EXPORT_EXAMPLE,
-          [InputFileLabel.CHASE_CHECKING]: CHASE_CHECKING_EXAMPLE,
-          [InputFileLabel.CHASE_FREEDOM_CREDIT]: CHASE_CREDIT_EXAMPLE,
-          [InputFileLabel.CHASE_AMAZON_CREDIT]: CHASE_CREDIT_EXAMPLE,
-        };
-
-        // Per-label header line index (0 = first non-empty line, default).
-        const headerLineIndexMap: Partial<Record<InputFileLabel, number>> = {
-          [InputFileLabel.VENMO]: 2,
-        };
-
-        const expectedFile = expectedFileMap[label];
-        if (expectedFile) {
-          const headerLineIndex = headerLineIndexMap[label];
-          const validation = new FileValidator(
-            expectedFile,
-            text,
-            headerLineIndex !== undefined ? { headerLineIndex } : {}
-          ).validateFile();
-          if (!validation.valid) {
-            setHeaderMismatch({
-              fileName: file.name,
-              expectedHeaders: validation.expectedHeaders,
-              actualHeaders: validation.actualHeaders,
-            });
-            setIsSubmitting(false);
-            return; // Stop processing all files on first mismatch
-          }
-        }
-
         let rows: FinanceSheetRow[] | undefined;
 
-        switch (label) {
-          case InputFileLabel.WELLS_FARGO_CHECKING:
-            rows = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, text).toFinanceRows(text);
+        switch (parserKey) {
+          case ParserKey.CHECKING_PARSER: {
+            const validation = new FileValidator(WELLS_FARGO_CHECKING_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.WELLS_FARGO_CREDIT:
-            rows = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.CREDIT_PARSER: {
+            const validation = new FileValidator(WELLS_FARGO_CREDIT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.VENMO:
-            rows = new VenmoParser(VENMO_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.VENMO_PARSER: {
+            const validation = new FileValidator(VENMO_EXAMPLE, text, { headerLineIndex: 2 }).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new VenmoParser(VENMO_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.CAPITAL_ONE_CREDIT:
-            rows = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.CAPITAL_ONE_CREDIT_PARSER: {
+            const validation = new FileValidator(CAPITAL_ONE_CREDIT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.AMEX_CREDIT:
-            rows = new AmexCreditParser(AMEX_CREDIT_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.AMEX_CREDIT_PARSER: {
+            const validation = new FileValidator(AMEX_CREDIT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new AmexCreditParser(AMEX_CREDIT_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.MATTHEW_SNAPSHOT_VENMO:
-            rows = new MatthewVenmoSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
-              text,
-              label: InputFileLabel.VENMO,
-            });
+          }
+          case ParserKey.MATTHEW_SNAPSHOT_VENMO: {
+            const validation = new FileValidator(MATTHEW_SNAPSHOT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new MatthewVenmoSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({ text, label: "Venmo" });
             break;
-          case InputFileLabel.MATTHEW_SNAPSHOT_CREDIT:
-            rows = new MatthewCreditSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
-              text,
-              label: InputFileLabel.WELLS_FARGO_CREDIT,
-            });
+          }
+          case ParserKey.MATTHEW_SNAPSHOT_CREDIT: {
+            const validation = new FileValidator(MATTHEW_SNAPSHOT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new MatthewCreditSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({ text, label: "Wells Fargo Credit" });
             break;
-          case InputFileLabel.MATTHEW_SNAPSHOT_CHECKING:
-            rows = new MatthewCheckingSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({
-              text,
-              label: InputFileLabel.WELLS_FARGO_CHECKING,
-            });
+          }
+          case ParserKey.MATTHEW_SNAPSHOT_CHECKING: {
+            const validation = new FileValidator(MATTHEW_SNAPSHOT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new MatthewCheckingSnapshotParser(MATTHEW_SNAPSHOT_EXAMPLE, text).toFinanceRows({ text, label: "Wells Fargo Checking" });
             break;
-          case InputFileLabel.DISCOVER:
-            rows = new DiscoverParser(DISCOVER_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.DISCOVER_PARSER: {
+            const validation = new FileValidator(DISCOVER_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new DiscoverParser(DISCOVER_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.EXPORT:
+          }
+          case ParserKey.EXPORT_PARSER: {
+            const validation = new FileValidator(EXPORT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
             rows = new ExportParser(EXPORT_EXAMPLE, text).toFinanceRows(text);
             break;
-          case InputFileLabel.CHASE_CHECKING:
-            rows = new ChaseCheckingParser(CHASE_CHECKING_EXAMPLE, text).toFinanceRows(text);
+          }
+          case ParserKey.CHASE_CHECKING_PARSER: {
+            const validation = new FileValidator(CHASE_CHECKING_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new ChaseCheckingParser(CHASE_CHECKING_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.CHASE_FREEDOM_CREDIT:
-            rows = new ChaseCreditParser(CHASE_CREDIT_EXAMPLE, text, InputFileLabel.CHASE_FREEDOM_CREDIT).toFinanceRows(text);
+          }
+          case ParserKey.CHASE_CREDIT_PARSER: {
+            const validation = new FileValidator(CHASE_CREDIT_EXAMPLE, text).validateFile();
+            if (!validation.valid) { setHeaderMismatch({ fileName: file.name, expectedHeaders: validation.expectedHeaders, actualHeaders: validation.actualHeaders }); setIsSubmitting(false); return; }
+            rows = new ChaseCreditParser(CHASE_CREDIT_EXAMPLE, text, identifier).toFinanceRows(text);
             break;
-          case InputFileLabel.CHASE_AMAZON_CREDIT:
-            rows = new ChaseCreditParser(CHASE_CREDIT_EXAMPLE, text, InputFileLabel.CHASE_AMAZON_CREDIT).toFinanceRows(text);
-            break;
-          case InputFileLabel.RULES_EXPORT:
+          }
+          case ParserKey.RULES_EXPORT_PARSER: {
             const rules = new RulesExportsParser(RULES_EXPORT_EXAMPLE, text).parse(text);
             await DatabaseService.writeRuleToDatabase({ rules });
             continue;
+          }
           default:
-            console.log(`Invalid label ${label}`);
+            console.log(`Unknown parser key: ${parserKey}`);
             continue;
         }
 
         if (rows) {
           const fullSource =
-            identifier && identifier.length > 0 ? `${label} | ${identifier}` : label;
-          rows = rows.map((row) => ({
-            ...row,
-            source: fullSource,
-          }));
-
-          // 🔹 Wrap DB write with loading modal state
+            identifier && identifier.length > 0 ? `${parserKey} | ${identifier}` : parserKey;
+          rows = rows.map((row) => ({ ...row, source: fullSource }));
           await DatabaseService.writeRowToDatabaseIfMissing({ rows });
         }
       }
     } catch (error) {
       console.error(error);
     } finally {
-      setIsSubmitting(false); // Hide modal after all operations
+      setIsSubmitting(false);
     }
   };
 
@@ -238,34 +255,6 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
-
-  const getRecommendedFileType = (fileName: string): InputFileLabel => {
-    const lower = fileName.toLowerCase();
-    if (lower.includes("checking")) return InputFileLabel.WELLS_FARGO_CHECKING;
-    if (lower.includes("credit")) return InputFileLabel.WELLS_FARGO_CREDIT;
-    if (lower.includes("venmo")) return InputFileLabel.VENMO;
-    if (lower.includes("_transaction_download")) return InputFileLabel.CAPITAL_ONE_CREDIT;
-    if (lower.includes("discover")) return InputFileLabel.DISCOVER;
-    if (lower.includes("activity.csv")) return InputFileLabel.AMEX_CREDIT;
-    if (lower.includes("finance_app-transactions") || lower.includes("finance_app-filtered-transactions")) return InputFileLabel.EXPORT;
-    if (lower.includes("finance_app-rules")) return InputFileLabel.RULES_EXPORT;
-    if (lower.includes("chase3727")) return InputFileLabel.CHASE_CHECKING;
-    if (lower.includes("chase1915")) return InputFileLabel.CHASE_FREEDOM_CREDIT;
-    if (lower.includes("chase1616")) return InputFileLabel.CHASE_AMAZON_CREDIT;
-    return InputFileLabel.WELLS_FARGO_CHECKING;
-  };
-
-  /**
-   * Returns a hard-coded sourceId for Chase accounts based on the filename,
-   * so the user doesn't have to type it manually.
-   */
-  const getAutoSourceId = (fileName: string, label: InputFileLabel): string => {
-    const lower = fileName.toLowerCase();
-    if (label === InputFileLabel.CHASE_CHECKING || lower.includes("chase3727")) return "Chase Joint Checking";
-    if (label === InputFileLabel.CHASE_FREEDOM_CREDIT || lower.includes("chase1915")) return "Chase Freedom Credit";
-    if (label === InputFileLabel.CHASE_AMAZON_CREDIT || lower.includes("chase1616")) return "Amazon Prime Credit";
-    return "";
   };
 
   return (
@@ -327,18 +316,18 @@ export default function MultiFileUploader(props: MultiFileUploaderProps) {
                 X
               </button>
               <select
-                value={file.label}
-                onChange={(e) => handleLabelChange(index, e.target.value as InputFileLabel)}
+                value={file.parserKey}
+                onChange={(e) => handleParserKeyChange(index, e.target.value as ParserKey)}
                 className="p-1 border rounded-md"
               >
-                {Object.values(InputFileLabel).map((label) => (
-                  <option key={label} value={label}>
-                    {label}
+                {Object.values(ParserKey).map((key) => (
+                  <option key={key} value={key}>
+                    {key}
                   </option>
                 ))}
               </select>
               <input
-                disabled={file.label === InputFileLabel.RULES_EXPORT}
+                disabled={file.parserKey === ParserKey.RULES_EXPORT_PARSER}
                 type="text"
                 value={file.identifier || ""}
                 onChange={(e) => handleIdentifierChange(index, e.target.value)}

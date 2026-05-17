@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { updateElectronApp } from 'update-electron-app';
 import { ipcMain } from 'electron';
-import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps } from './preload';
+import { AttachDatabaseProps, DeleteDatabaseRulesProps, DeleteRowFromDatabaseProps, GetAllExistingDatabasesProps, GetDbLocalPathProps, GetDistinctValuesOfColumnProps, OnAttachDatabaseResult, OnDeleteDatabaseRulesResult, OnDeleteRowFromDatabaseResult, OnGetAllExistingDatabasesResult, OnGetDbLocalPathResult, OnGetDistinctValuesOfColumnResult, OnReadDatabaseRowsResult, OnReadDatabaseRulesResult, OnReadEmptyCategoryDatabaseRowsResult, OnUpdateRowInDatabaseResult, OnUpdateRuleInDatabaseResult, OnWriteDatabaseRulesResult, OnWriteRowToDatabaseIfMissingResult, OnWriteRowToDatabaseResult, ReadDatabaseRowsProps, ReadDatabaseRulesProps, ReadEmptyCategoryDatabaseRowsProps, UpdateRowInDatabaseProps, UpdateRuleInDatabaseProps, WriteDatabaseRulesProps, WriteRowToDatabaseIfMissingProps, WriteRowToDatabaseProps, ReadFileTypesProps, OnReadFileTypesResult, WriteFileTypeProps, OnWriteFileTypeResult, DeleteFileTypeProps, OnDeleteFileTypeResult, UpdateFileTypeProps, OnUpdateFileTypeResult } from './preload';
 import { DatabaseName, FinanceSheetRow, WesterhamDatabase } from './db/WesterhamDatabase';
 import path from 'path';
 import { FileService } from './file/FileService';
@@ -21,6 +21,7 @@ updateElectronApp({
 const dbsTargetPath = path.join(app.getPath("userData"), 'financeApp', 'dbs');
 let db = new WesterhamDatabase(FileService.getOrCreateDbFilePath(dbsTargetPath, DatabaseName.DEFAULT));
 BackupService.backup(db.getDbPath());
+db.ensureFileTypesTable();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -72,6 +73,7 @@ ipcMain.on('getAllExistingDatabases', async (event, props: GetAllExistingDatabas
 ipcMain.on('attachDatabase', async (event, props: AttachDatabaseProps) => {
   db = new WesterhamDatabase(FileService.getOrCreateDbFilePath(dbsTargetPath, props.databaseName));
   BackupService.backup(db.getDbPath());
+  db.ensureFileTypesTable();
   const response: OnAttachDatabaseResult = {
     success: true, 
   };
@@ -245,4 +247,53 @@ ipcMain.on('getDistinctValuesOfColumn', async (event, props: GetDistinctValuesOf
     distinctValues: values
   };
   event.reply('onGetDistinctValuesOfColumn', response);
+});
+
+// ─── File Types ───────────────────────────────────────────────────────────────
+
+ipcMain.on('readFileTypes', async (event, props: ReadFileTypesProps) => {
+  try {
+    const fileTypes = await db.getAllFileTypes();
+    const response: OnReadFileTypesResult = { fileTypes };
+    event.reply('readFileTypesResult', response);
+  } catch (err) {
+    console.error("Error reading file types:", err);
+    event.reply('readFileTypesResult', { fileTypes: [] });
+  }
+});
+
+ipcMain.on('writeFileType', async (event, props: WriteFileTypeProps) => {
+  try {
+    await db.insertFileType(props.fileType);
+    BackupService.backup(db.getDbPath());
+    const response: OnWriteFileTypeResult = { data: props.fileType };
+    event.reply('writeFileTypeResult', response);
+  } catch (err) {
+    console.error("Error writing file type:", err);
+    event.reply('writeFileTypeResult', { data: null, err });
+  }
+});
+
+ipcMain.on('deleteFileType', async (event, props: DeleteFileTypeProps) => {
+  try {
+    await db.deleteFileType(props.fileTypeId);
+    BackupService.backup(db.getDbPath());
+    const response: OnDeleteFileTypeResult = { deletedId: props.fileTypeId, deleted: true };
+    event.reply('deleteFileTypeResult', response);
+  } catch (err) {
+    console.error("Error deleting file type:", err);
+    event.reply('deleteFileTypeResult', { deletedId: props.fileTypeId, deleted: false, err });
+  }
+});
+
+ipcMain.on('updateFileType', async (event, props: UpdateFileTypeProps) => {
+  try {
+    await db.updateFileTypeRow(props.fileTypeId, props.fileType);
+    BackupService.backup(db.getDbPath());
+    const response: OnUpdateFileTypeResult = { data: props.fileType };
+    event.reply('updateFileTypeResult', response);
+  } catch (err) {
+    console.error("Error updating file type:", err);
+    event.reply('updateFileTypeResult', { data: null, err });
+  }
 });

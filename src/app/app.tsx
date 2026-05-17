@@ -6,6 +6,7 @@ import { prettyPrintString } from "./util/util";
 import DatabaseService from "./util/DatabaseService";
 import { RuleBasedCategorizer } from "./views/RuleBasedCategorizer";
 import { RuleManager } from "./views/RuleManager";
+import { FileTypeManager } from "./views/FileTypeManager";
 import { DatabaseManager } from "./components/DatabaseManager";
 
 const App = () => {
@@ -28,7 +29,7 @@ const App = () => {
         }}/>
       </div>
       <div className="mb-4 flex border-b">
-        {["pivotTable", "transactionTable", "categorizeItems", "ruleManager", "importFiles"].map((tab) => (
+        {["pivotTable", "transactionTable", "categorizeItems", "ruleManager", "fileTypeManager", "importFiles"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -43,6 +44,7 @@ const App = () => {
       {activeTab === "importFiles" && <MultiFileUploader key={version} />}
       {activeTab === "categorizeItems" && <RuleBasedCategorizer key={version} />}
       {activeTab === "ruleManager" && <RuleManager key={version} />}
+      {activeTab === "fileTypeManager" && <FileTypeManager key={version} />}
       {activeTab === "transactionTable" && <TanstackDataTable key={version} />}
     </div>
   );

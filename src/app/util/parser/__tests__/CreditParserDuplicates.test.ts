@@ -12,7 +12,7 @@ describe("CreditParser - real file", () => {
       path.resolve(__dirname, "resources/CreditCard2.csv"),
       "utf-8"
     );
-    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, csvContent);
+    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, csvContent, "Wells Fargo Credit");
   });
 
   it("should parse all 52 data rows from the real CSV file (plus 1 header row)", () => {

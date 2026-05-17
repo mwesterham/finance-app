@@ -1,12 +1,12 @@
 import CheckingParser from "../CheckingParser";
-import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { ParserKey } from "../../../views/MultiFileUploader";
 import { WELLS_FARGO_CHECKING_EXAMPLE } from "../exampleFiles";
 
 describe("CheckingParser", () => {
   let parser: CheckingParser;
 
   beforeEach(() => {
-    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, WELLS_FARGO_CHECKING_EXAMPLE);
+    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, WELLS_FARGO_CHECKING_EXAMPLE, "Wells Fargo Checking");
   });
 
   describe("parse", () => {
@@ -122,7 +122,7 @@ describe("CheckingParser", () => {
       expect(resultDate.getMonth()).toBe(3); // April
       expect(resultDate.getDate()).toBe(11);
       expect(result[0].amount).toBe(4142.66);
-      expect(result[0].source).toBe(InputFileLabel.WELLS_FARGO_CHECKING);
+      expect(result[0].source).toBe(ParserKey.CHECKING_PARSER);
       expect(result[0].transactionInfo).toBe("AMAZON.COM SVCS DIRECT DEP 250411 937034978351NFT WESTERHAM,MATTHEW");
     });
 

@@ -12,7 +12,7 @@ describe("CheckingParser - real file", () => {
       path.resolve(__dirname, "resources/Checking1.csv"),
       "utf-8"
     );
-    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, csvContent);
+    parser = new CheckingParser(WELLS_FARGO_CHECKING_EXAMPLE, csvContent, "Wells Fargo Checking");
   });
 
   it("should parse all 29 data rows from the real CSV file (plus 1 header row)", () => {

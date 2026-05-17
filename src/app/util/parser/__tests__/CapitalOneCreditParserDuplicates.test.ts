@@ -12,7 +12,7 @@ describe("CapitalOneCreditParser - duplicate detection", () => {
       path.resolve(__dirname, "resources/2026-03-21_transaction_download.csv"),
       "utf-8"
     );
-    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, csvContent);
+    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, csvContent, "Capital One Credit");
   });
 
   it("should parse all 28 data rows from the real CSV file", () => {

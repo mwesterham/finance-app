@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../views/MultiFileUploader";
+
 import { FileValidator } from "./FileValidator";
 
 export interface MatthewVenmoSnapshotRow {
@@ -15,7 +15,7 @@ export interface MatthewVenmoSnapshotRow {
 
 export interface MatthewVenmoSnapshotParserInput {
   text: string;
-  label: InputFileLabel;
+  label: string;
 }
 
 export default class MatthewVenmoSnapshotParser implements IParser<MatthewVenmoSnapshotParserInput, MatthewVenmoSnapshotRow[]> {

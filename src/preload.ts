@@ -1,7 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import {ipcRenderer, contextBridge} from "electron";
-import { FinanceSheetRow, Rule } from "./db/WesterhamDatabase";
+import { FinanceSheetRow, Rule, FileType } from "./db/WesterhamDatabase";
 
 // Declare types globally
 declare global {
@@ -117,6 +117,36 @@ export interface OnAttachDatabaseResult extends Result {
   success: boolean;
 }
 
+// ─── File Types ───────────────────────────────────────────────────────────────
+
+export interface ReadFileTypesProps {}
+export interface OnReadFileTypesResult extends Result {
+  fileTypes: FileType[];
+}
+
+export interface WriteFileTypeProps {
+  fileType: FileType;
+}
+export interface OnWriteFileTypeResult extends Result {
+  data: any;
+}
+
+export interface DeleteFileTypeProps {
+  fileTypeId: number;
+}
+export interface OnDeleteFileTypeResult extends Result {
+  deletedId: number;
+  deleted: boolean;
+}
+
+export interface UpdateFileTypeProps {
+  fileTypeId: string;
+  fileType: FileType;
+}
+export interface OnUpdateFileTypeResult extends Result {
+  data: any;
+}
+
 const electronAPI = {
   readDatabaseRows: async (props?: ReadDatabaseRowsProps) => ipcRenderer.send('readDatabaseRows', props),
   onReadDatabaseRows: (callback: (event: any, values: OnReadDatabaseRowsResult) => void) => 
@@ -187,6 +217,26 @@ const electronAPI = {
   onAttachDatabase: (callback: (event: any, values: OnAttachDatabaseResult) => void) => 
     ipcRenderer.on('attachDatabase', callback),
   detachOnAttachDatabase: () => ipcRenderer.removeAllListeners('attachDatabase'),
+
+  readFileTypes: async (props?: ReadFileTypesProps) => ipcRenderer.send('readFileTypes', props),
+  onReadFileTypes: (callback: (event: any, values: OnReadFileTypesResult) => void) =>
+    ipcRenderer.on('readFileTypesResult', callback),
+  detachOnReadFileTypes: () => ipcRenderer.removeAllListeners('readFileTypesResult'),
+
+  writeFileType: async (props: WriteFileTypeProps) => ipcRenderer.send('writeFileType', props),
+  onWriteFileType: (callback: (event: any, values: OnWriteFileTypeResult) => void) =>
+    ipcRenderer.on('writeFileTypeResult', callback),
+  detachOnWriteFileType: () => ipcRenderer.removeAllListeners('writeFileTypeResult'),
+
+  deleteFileType: async (props: DeleteFileTypeProps) => ipcRenderer.send('deleteFileType', props),
+  onDeleteFileType: (callback: (event: any, values: OnDeleteFileTypeResult) => void) =>
+    ipcRenderer.on('deleteFileTypeResult', callback),
+  detachOnDeleteFileType: () => ipcRenderer.removeAllListeners('deleteFileTypeResult'),
+
+  updateFileType: async (props: UpdateFileTypeProps) => ipcRenderer.send('updateFileType', props),
+  onUpdateFileType: (callback: (event: any, values: OnUpdateFileTypeResult) => void) =>
+    ipcRenderer.on('updateFileTypeResult', callback),
+  detachOnUpdateFileType: () => ipcRenderer.removeAllListeners('updateFileTypeResult'),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -1,12 +1,12 @@
 import CapitalOneCreditParser from "../CapitalOneCreditParser";
-import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { ParserKey } from "../../../views/MultiFileUploader";
 import { CAPITAL_ONE_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CapitalOneCreditParser", () => {
   let parser: CapitalOneCreditParser;
 
   beforeEach(() => {
-    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, CAPITAL_ONE_CREDIT_EXAMPLE);
+    parser = new CapitalOneCreditParser(CAPITAL_ONE_CREDIT_EXAMPLE, CAPITAL_ONE_CREDIT_EXAMPLE, "Capital One Credit");
   });
 
   describe("parse", () => {
@@ -72,7 +72,7 @@ describe("CapitalOneCreditParser", () => {
       expect(resultDate.getMonth()).toBe(11);
       expect(resultDate.getDate()).toBe(3); // Now correctly December 3rd
       expect(result[1].amount).toBe(-80.93);
-      expect(result[1].source).toBe(InputFileLabel.CAPITAL_ONE_CREDIT);
+      expect(result[1].source).toBe(ParserKey.CAPITAL_ONE_CREDIT_PARSER);
       expect(result[1].transactionInfo).toBe("TST* SHINKO");
     });
 

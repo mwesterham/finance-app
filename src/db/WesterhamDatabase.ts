@@ -21,11 +21,25 @@ export interface Rule {
   providedDetail?: string;
 }
 
+/**
+ * A user-configurable file type definition.
+ * - filenamePattern: substring matched (case-insensitive) against the uploaded filename
+ * - parserKey: the ParserKey enum value identifying which parser to use
+ * - defaultSourceId: pre-filled source identifier shown in the uploader
+ */
+export interface FileType {
+  fileTypeId?: string;
+  filenamePattern: string;
+  parserKey: string;
+  defaultSourceId: string;
+}
+
 export class WesterhamDatabase {
   private dbPath: string;
   private db: sqlite3.Database;
   private FINANCE_TABLE_NAME = "finance_sheet";
   private RULES_TABLE_NAME = "rules";
+  private FILE_TYPES_TABLE_NAME = "file_types";
 
   constructor(dbPath: string) {
     this.dbPath = dbPath;
@@ -68,15 +82,51 @@ export class WesterhamDatabase {
         matching_expression TEXT NOT NULL,
         category TEXT NOT NULL,
         provided_detail TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS ${this.FILE_TYPES_TABLE_NAME} (
+        file_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename_pattern TEXT NOT NULL,
+        parser_key TEXT NOT NULL,
+        default_source_id TEXT NOT NULL DEFAULT ''
     );`;
 
     this.db.exec(queries, (err) => {
       if (err) {
         console.error("Error creating tables:", err);
       } else {
-        console.log(`Created tables: ${this.FINANCE_TABLE_NAME}, ${this.RULES_TABLE_NAME}`);
+        console.log(`Created tables: ${this.FINANCE_TABLE_NAME}, ${this.RULES_TABLE_NAME}, ${this.FILE_TYPES_TABLE_NAME}`);
+        this.seedFileTypes();
       }
     });
+  }
+
+  private seedFileTypes() {
+    const defaults: Array<{ filenamePattern: string; parserKey: string; defaultSourceId: string }> = [
+      { filenamePattern: "checking",                          parserKey: "Wells Fargo Checking",          defaultSourceId: "" },
+      { filenamePattern: "credit",                            parserKey: "Wells Fargo Credit",            defaultSourceId: "" },
+      { filenamePattern: "venmo",                             parserKey: "Venmo",                         defaultSourceId: "" },
+      { filenamePattern: "_transaction_download",             parserKey: "Capital One Credit",            defaultSourceId: "" },
+      { filenamePattern: "discover",                          parserKey: "Discover",                      defaultSourceId: "" },
+      { filenamePattern: "activity.csv",                      parserKey: "Amex Credit",                   defaultSourceId: "" },
+      { filenamePattern: "finance_app-transactions",          parserKey: "Transactions Exported",         defaultSourceId: "" },
+      { filenamePattern: "finance_app-filtered-transactions", parserKey: "Transactions Exported",         defaultSourceId: "" },
+      { filenamePattern: "finance_app-rules",                 parserKey: "Rules Exported",                defaultSourceId: "" },
+      { filenamePattern: "chase3727",                         parserKey: "Chase Checking",                defaultSourceId: "Chase Joint Checking" },
+      { filenamePattern: "chase1915",                         parserKey: "Chase Credit",                  defaultSourceId: "Chase Freedom Credit" },
+      { filenamePattern: "chase1616",                         parserKey: "Chase Credit",                  defaultSourceId: "Amazon Prime Credit" },
+    ];
+
+    const stmt = this.db.prepare(
+      `INSERT INTO ${this.FILE_TYPES_TABLE_NAME} (filename_pattern, parser_key, default_source_id) VALUES (?, ?, ?)`
+    );
+    for (const row of defaults) {
+      stmt.run([row.filenamePattern, row.parserKey, row.defaultSourceId], (err: Error | null) => {
+        if (err) console.error("Error seeding file type:", err);
+      });
+    }
+    stmt.finalize();
+    console.log("Seeded default file types");
   }
 
   public async insertIntoTable(table: string, columns: string[], values: any[]) {
@@ -314,6 +364,98 @@ export class WesterhamDatabase {
           resolve(row?.lastTransactionId ?? null); // Return the last transaction_id or null if not found
           console.log(`Successfully fetched last transaction_id: ${row?.lastTransactionId}`);
         }
+      });
+    });
+  }
+
+  // ─── File Types ──────────────────────────────────────────────────────────────
+
+  /**
+   * Ensures the file_types table exists and is seeded for databases that were
+   * created before this feature was added.
+   */
+  public ensureFileTypesTable(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const createQuery = `
+        CREATE TABLE IF NOT EXISTS ${this.FILE_TYPES_TABLE_NAME} (
+          file_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          filename_pattern TEXT NOT NULL,
+          parser_key TEXT NOT NULL,
+          default_source_id TEXT NOT NULL DEFAULT ''
+        )`;
+      this.db.run(createQuery, (err) => {
+        if (err) {
+          reject("Error ensuring file_types table: " + err);
+          return;
+        }
+        // Seed only if empty
+        this.db.get<{ count: number }>(
+          `SELECT COUNT(*) AS count FROM ${this.FILE_TYPES_TABLE_NAME}`,
+          [],
+          (err2, row) => {
+            if (err2) { reject(err2); return; }
+            if (row.count === 0) {
+              this.seedFileTypes();
+            }
+            resolve();
+          }
+        );
+      });
+    });
+  }
+
+  public async insertFileType(fileType: FileType): Promise<void> {
+    const query = `INSERT INTO ${this.FILE_TYPES_TABLE_NAME} (filename_pattern, parser_key, default_source_id) VALUES (?, ?, ?)`;
+    const values = [fileType.filenamePattern, fileType.parserKey, fileType.defaultSourceId ?? ""];
+    return new Promise((resolve, reject) => {
+      this.db.run(query, values, (err) => {
+        if (err) reject("Error inserting file type: " + err);
+        else { console.log(`Inserted file type: ${JSON.stringify(fileType)}`); resolve(); }
+      });
+    });
+  }
+
+  public async getAllFileTypes(): Promise<FileType[]> {
+    const query = `SELECT file_type_id AS fileTypeId, filename_pattern AS filenamePattern, parser_key AS parserKey, default_source_id AS defaultSourceId FROM ${this.FILE_TYPES_TABLE_NAME} ORDER BY file_type_id`;
+    return new Promise((resolve, reject) => {
+      this.db.all<FileType>(query, [], (err, rows) => {
+        if (err) reject("Error fetching file types: " + err);
+        else { resolve(rows); }
+      });
+    });
+  }
+
+  public async deleteFileType(fileTypeId: number): Promise<void> {
+    const query = `DELETE FROM ${this.FILE_TYPES_TABLE_NAME} WHERE file_type_id = ?`;
+    return new Promise((resolve, reject) => {
+      this.db.run(query, [fileTypeId], (err) => {
+        if (err) reject("Error deleting file type: " + err);
+        else { console.log(`Deleted file type id=${fileTypeId}`); resolve(); }
+      });
+    });
+  }
+
+  public async updateFileTypeRow(fileTypeId: string, updated: Partial<FileType>): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const setStatements: string[] = [];
+      const values: any[] = [];
+
+      for (const [key, value] of Object.entries(updated)) {
+        const columnName = key.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+        if (value === null || value === undefined) {
+          setStatements.push(`${columnName} = ''`);
+        } else {
+          setStatements.push(`${columnName} = ?`);
+          values.push(value);
+        }
+      }
+
+      const query = `UPDATE ${this.FILE_TYPES_TABLE_NAME} SET ${setStatements.join(', ')} WHERE file_type_id = ?`;
+      values.push(fileTypeId);
+
+      this.db.run(query, values, function (err) {
+        if (err) reject(`Error updating file type: ${err}`);
+        else { console.log(`Updated file type id=${fileTypeId}`); resolve(); }
       });
     });
   }

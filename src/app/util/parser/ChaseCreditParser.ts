@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../views/MultiFileUploader";
+
 import { FileValidator } from "./FileValidator";
 
 export interface ChaseCreditInputRow {
@@ -13,9 +13,9 @@ export interface ChaseCreditInputRow {
 
 export default class ChaseCreditParser implements IParser<string, ChaseCreditInputRow[]> {
   private validator: FileValidator;
-  private source: InputFileLabel;
+  private source: string;
 
-  constructor(expectedFile: string, actualFile: string, source: InputFileLabel) {
+  constructor(expectedFile: string, actualFile: string, source: string) {
     this.validator = new FileValidator(expectedFile, actualFile);
     this.source = source;
   }

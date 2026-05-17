@@ -27,6 +27,14 @@ import {
   OnGetAllExistingDatabasesResult,
   AttachDatabaseProps,
   OnAttachDatabaseResult,
+  ReadFileTypesProps,
+  OnReadFileTypesResult,
+  WriteFileTypeProps,
+  OnWriteFileTypeResult,
+  DeleteFileTypeProps,
+  OnDeleteFileTypeResult,
+  UpdateFileTypeProps,
+  OnUpdateFileTypeResult,
 } from "../../preload";
 
 export default class DatabaseService {
@@ -212,6 +220,60 @@ export default class DatabaseService {
       };
       window.electronAPI.onAttachDatabase(handler);
       window.electronAPI.attachDatabase(props);
+    });
+  }
+
+  // ─── File Types ─────────────────────────────────────────────────────────────
+
+  static readFileTypes(
+    props?: ReadFileTypesProps
+  ): Promise<OnReadFileTypesResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnReadFileTypesResult) => {
+        window.electronAPI.detachOnReadFileTypes();
+        resolve(result);
+      };
+      window.electronAPI.onReadFileTypes(handler);
+      window.electronAPI.readFileTypes(props);
+    });
+  }
+
+  static writeFileType(
+    props: WriteFileTypeProps
+  ): Promise<OnWriteFileTypeResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnWriteFileTypeResult) => {
+        window.electronAPI.detachOnWriteFileType();
+        resolve(result);
+      };
+      window.electronAPI.onWriteFileType(handler);
+      window.electronAPI.writeFileType(props);
+    });
+  }
+
+  static deleteFileType(
+    props: DeleteFileTypeProps
+  ): Promise<OnDeleteFileTypeResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnDeleteFileTypeResult) => {
+        window.electronAPI.detachOnDeleteFileType();
+        resolve(result);
+      };
+      window.electronAPI.onDeleteFileType(handler);
+      window.electronAPI.deleteFileType(props);
+    });
+  }
+
+  static updateFileType(
+    props: UpdateFileTypeProps
+  ): Promise<OnUpdateFileTypeResult> {
+    return new Promise((resolve) => {
+      const handler = (event: any, result: OnUpdateFileTypeResult) => {
+        window.electronAPI.detachOnUpdateFileType();
+        resolve(result);
+      };
+      window.electronAPI.onUpdateFileType(handler);
+      window.electronAPI.updateFileType(props);
     });
   }
 }

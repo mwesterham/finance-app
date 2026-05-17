@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { IParser } from "./IParser";
 import { cleanDate, cleanNumber } from "../util";
 import { FinanceSheetRow } from "../../../db/WesterhamDatabase";
-import { InputFileLabel } from "../../views/MultiFileUploader";
+
 import { FileValidator } from "./FileValidator";
 
 export interface CheckingInputRow {
@@ -13,9 +13,11 @@ export interface CheckingInputRow {
 
 export default class CheckingParser implements IParser<string, CheckingInputRow[]> {
   private validator: FileValidator;
+  private source: string;
 
-  constructor(expectedFile: string, actualFile: string) {
+  constructor(expectedFile: string, actualFile: string, source: string) {
     this.validator = new FileValidator(expectedFile, actualFile);
+    this.source = source;
   }
 
   toFinanceRows(input: string): FinanceSheetRow[] {
@@ -24,7 +26,7 @@ export default class CheckingParser implements IParser<string, CheckingInputRow[
       const financeRow: FinanceSheetRow = {
         epoch: checkingInput.date.getTime(),
         amount: checkingInput.amount,
-        source: InputFileLabel.WELLS_FARGO_CHECKING,
+        source: this.source,
         transactionInfo: checkingInput.detail,
       };
       return financeRow;

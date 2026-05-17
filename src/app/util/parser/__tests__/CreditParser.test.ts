@@ -1,12 +1,12 @@
 import CreditParser from "../CreditParser";
-import { InputFileLabel } from "../../../views/MultiFileUploader";
+import { ParserKey } from "../../../views/MultiFileUploader";
 import { WELLS_FARGO_CREDIT_EXAMPLE } from "../exampleFiles";
 
 describe("CreditParser", () => {
   let parser: CreditParser;
 
   beforeEach(() => {
-    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, WELLS_FARGO_CREDIT_EXAMPLE);
+    parser = new CreditParser(WELLS_FARGO_CREDIT_EXAMPLE, WELLS_FARGO_CREDIT_EXAMPLE, "Wells Fargo Credit");
   });
 
   describe("parse", () => {
@@ -185,7 +185,7 @@ describe("CreditParser", () => {
       expect(resultDate.getMonth()).toBe(1); // February
       expect(resultDate.getDate()).toBe(7);
       expect(result[0].amount).toBe(-30.95);
-      expect(result[0].source).toBe(InputFileLabel.WELLS_FARGO_CREDIT);
+      expect(result[0].source).toBe(ParserKey.CREDIT_PARSER);
       expect(result[0].transactionInfo).toBe("SP SMOKO INC. SMOKONOW.COM CA");
     });
 
